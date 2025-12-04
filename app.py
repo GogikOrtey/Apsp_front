@@ -1,7 +1,39 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+import json
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'  # Важно для работы сессий
+
+# Создаем папку data, если её нет
+os.makedirs('data', exist_ok=True)
+
+# Путь к JSON файлу
+JSON_FILE = 'data/submissions.json'
+
+def save_to_json(data):
+    """Сохранение данных в JSON файл"""
+    # Загружаем существующие данные
+    if os.path.exists(JSON_FILE):
+        with open(JSON_FILE, 'r', encoding='utf-8') as f:
+            try:
+                submissions = json.load(f)
+            except json.JSONDecodeError:
+                submissions = []
+    else:
+        submissions = []
+    
+    # Добавляем новую запись с временной меткой
+    submission = {
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        **data
+    }
+    submissions.append(submission)
+    
+    # Сохраняем обратно в файл
+    with open(JSON_FILE, 'w', encoding='utf-8') as f:
+        json.dump(submissions, f, ensure_ascii=False, indent=2)
 
 @app.route('/')
 def index():
@@ -80,8 +112,22 @@ def summary():
     
     if request.method == 'POST':
         if request.form.get('confirm') == 'yes':
-            # Здесь можно сохранить данные в БД или отправить на обработку
-            # Для примера просто очищаем сессию и показываем сообщение
+            # Собираем все данные из сессии
+            form_data = {
+                'name': session.get('name', ''),
+                'email': session.get('email', ''),
+                'phone': session.get('phone', ''),
+                'age': session.get('age', ''),
+                'city': session.get('city', ''),
+                'gender': session.get('gender', ''),
+                'interests': session.get('interests', []),
+                'newsletter': session.get('newsletter', 'no'),
+                'comments': session.get('comments', '')
+            }
+            
+            # Сохраняем данные в JSON
+            save_to_json(form_data)
+            
             session['submitted'] = True
             return redirect(url_for('success'))
         else:
