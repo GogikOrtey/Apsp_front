@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+
+{% block title %}Шаг 3 - Выбор опций{% endblock %}
+
+{% block content %}
+<h1>Шаг 3: Выбор опций</h1>
+
+<div class="step-indicator">
+    <div class="step completed">1</div>
+    <div class="step completed">2</div>
+    <div class="step active">3</div>
+    <div class="step">4</div>
+</div>
+
+<form method="POST">
+    <div class="form-group">
+        <label>Интересы (можно выбрать несколько)</label>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" id="interest_tech" name="interests" value="tech" {% if 'tech' in interests %}checked{% endif %}>
+                <label for="interest_tech">Технологии</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="interest_sports" name="interests" value="sports" {% if 'sports' in interests %}checked{% endif %}>
+                <label for="interest_sports">Спорт</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="interest_music" name="interests" value="music" {% if 'music' in interests %}checked{% endif %}>
+                <label for="interest_music">Музыка</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="interest_travel" name="interests" value="travel" {% if 'travel' in interests %}checked{% endif %}>
+                <label for="interest_travel">Путешествия</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="interest_books" name="interests" value="books" {% if 'books' in interests %}checked{% endif %}>
+                <label for="interest_books">Книги</label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Подписаться на рассылку?</label>
+        <div class="radio-group">
+            <div class="radio-item">
+                <input type="radio" id="newsletter_yes" name="newsletter" value="yes" {% if newsletter == 'yes' %}checked{% endif %}>
+                <label for="newsletter_yes">Да</label>
+            </div>
+            <div class="radio-item">
+                <input type="radio" id="newsletter_no" name="newsletter" value="no" {% if newsletter == 'no' %}checked{% endif %}>
+                <label for="newsletter_no">Нет</label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label for="comments">Дополнительные комментарии</label>
+        <textarea id="comments" name="comments" placeholder="Ваши комментарии...">{{ comments }}</textarea>
+    </div>
+    
+    <div class="btn-group">
+        <a href="{{ url_for('step2') }}" class="btn btn-secondary">← Назад</a>
+        <button type="submit" class="btn btn-primary">Далее →</button>
+    </div>
+</form>
+{% endblock %}
+

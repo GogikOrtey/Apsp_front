@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block title %}Шаг 2 - Дополнительная информация{% endblock %}
+
+{% block content %}
+<h1>Шаг 2: Дополнительная информация</h1>
+
+<div class="step-indicator">
+    <div class="step completed">1</div>
+    <div class="step active">2</div>
+    <div class="step">3</div>
+    <div class="step">4</div>
+</div>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="age">Возраст</label>
+        <input type="number" id="age" name="age" value="{{ age }}" min="1" max="120">
+    </div>
+    
+    <div class="form-group">
+        <label for="city">Город</label>
+        <input type="text" id="city" name="city" value="{{ city }}" placeholder="Москва">
+    </div>
+    
+    <div class="form-group">
+        <label>Пол</label>
+        <div class="radio-group">
+            <div class="radio-item">
+                <input type="radio" id="gender_male" name="gender" value="male" {% if gender == 'male' %}checked{% endif %}>
+                <label for="gender_male">Мужской</label>
+            </div>
+            <div class="radio-item">
+                <input type="radio" id="gender_female" name="gender" value="female" {% if gender == 'female' %}checked{% endif %}>
+                <label for="gender_female">Женский</label>
+            </div>
+            <div class="radio-item">
+                <input type="radio" id="gender_other" name="gender" value="other" {% if gender == 'other' %}checked{% endif %}>
+                <label for="gender_other">Другое</label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="btn-group">
+        <a href="{{ url_for('step1') }}" class="btn btn-secondary">← Назад</a>
+        <button type="submit" class="btn btn-primary">Далее →</button>
+    </div>
+</form>
+{% endblock %}
+

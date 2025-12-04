@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block title %}Шаг 1 - Личная информация{% endblock %}
+
+{% block content %}
+<h1>Шаг 1: Личная информация</h1>
+
+<div class="step-indicator">
+    <div class="step active">1</div>
+    <div class="step">2</div>
+    <div class="step">3</div>
+    <div class="step">4</div>
+</div>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="name">Имя *</label>
+        <input type="text" id="name" name="name" value="{{ name }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="email">Email *</label>
+        <input type="email" id="email" name="email" value="{{ email }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="phone">Телефон</label>
+        <input type="tel" id="phone" name="phone" value="{{ phone }}" placeholder="+7 (999) 123-45-67">
+    </div>
+    
+    <div class="btn-group">
+        <div></div>
+        <button type="submit" class="btn btn-primary">Далее →</button>
+    </div>
+</form>
+{% endblock %}
+

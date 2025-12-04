@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}Шаг 4 - Подтверждение{% endblock %}
+
+{% block content %}
+<h1>Шаг 4: Подтверждение данных</h1>
+
+<div class="step-indicator">
+    <div class="step completed">1</div>
+    <div class="step completed">2</div>
+    <div class="step completed">3</div>
+    <div class="step active">4</div>
+</div>
+
+<div style="margin-bottom: 30px;">
+    <h2 style="color: #667eea; margin-bottom: 20px;">Проверьте введенные данные:</h2>
+    
+    <div class="summary-item">
+        <strong>Имя:</strong> {{ data.name }}
+    </div>
+    
+    <div class="summary-item">
+        <strong>Email:</strong> {{ data.email }}
+    </div>
+    
+    <div class="summary-item">
+        <strong>Телефон:</strong> {{ data.phone if data.phone else 'Не указан' }}
+    </div>
+    
+    <div class="summary-item">
+        <strong>Возраст:</strong> {{ data.age if data.age else 'Не указан' }}
+    </div>
+    
+    <div class="summary-item">
+        <strong>Город:</strong> {{ data.city if data.city else 'Не указан' }}
+    </div>
+    
+    <div class="summary-item">
+        <strong>Пол:</strong> 
+        {% if data.gender == 'male' %}Мужской
+        {% elif data.gender == 'female' %}Женский
+        {% elif data.gender == 'other' %}Другое
+        {% else %}Не указан
+        {% endif %}
+    </div>
+    
+    <div class="summary-item">
+        <strong>Интересы:</strong> 
+        {% if data.interests %}
+            {{ data.interests|join(', ') }}
+        {% else %}
+            Не выбраны
+        {% endif %}
+    </div>
+    
+    <div class="summary-item">
+        <strong>Рассылка:</strong> {{ 'Да' if data.newsletter == 'yes' else 'Нет' }}
+    </div>
+    
+    {% if data.comments %}
+    <div class="summary-item">
+        <strong>Комментарии:</strong> {{ data.comments }}
+    </div>
+    {% endif %}
+</div>
+
+<form method="POST">
+    <div class="btn-group">
+        <a href="{{ url_for('step3') }}" class="btn btn-secondary">← Назад</a>
+        <div>
+            <input type="hidden" name="confirm" value="yes">
+            <button type="submit" class="btn btn-success">Подтвердить и отправить ✓</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
