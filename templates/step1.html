@@ -102,9 +102,16 @@
     
     .field-checkbox input[type="checkbox"]:disabled {
         cursor: default;
-        opacity: 0.7;
-        /* accent-color: #666; */
-        accent-color: #414141;
+        opacity: 1;
+        accent-color: #818181;
+        filter: brightness(0.6) grayscale(0.2);
+        -webkit-filter: brightness(0.6) grayscale(0.2);
+    }
+    
+    .field-checkbox input[type="checkbox"]:disabled:checked {
+        accent-color: #818181;
+        filter: brightness(0.6) grayscale(0.2);
+        -webkit-filter: brightness(0.6) grayscale(0.2);
     }
     
     .field-checkbox label {
