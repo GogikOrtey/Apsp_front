@@ -1,32 +1,37 @@
 import re
 import os
+import hashlib
+import json
 
-
-def extract_fields_description(file_path='add_files/Fields_static.ts'):
+def calculate_file_hash(file_path):
     """
-    Извлекает из файла Fields_static.ts все незакомментированные строки,
-    а затем добавляет каждый элемент в словарь, преобразуя структуру
-    export const name: field = ['name', 'Наименование товара'];
-    в "name": "Наименование товара"
+    Вычисляет SHA256 хеш содержимого файла.
     
     Args:
-        file_path: путь к файлу Fields_static.ts
+        file_path: путь к файлу
+        
+    Returns:
+        str: hex-представление хеша
+    """
+    sha256_hash = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+def extract_fields_from_content(content):
+    """
+    Извлекает поля из содержимого файла.
+    
+    Args:
+        content: содержимое файла (строка)
         
     Returns:
         dict: словарь с полями в формате {"name": "Наименование товара", ...}
     """
     fields_dict = {}
     
-    # Проверяем существование файла
-    if not os.path.exists(file_path):
-        print(f"Файл {file_path} не найден")
-        return fields_dict
-    
-    with open(file_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
     # Удаляем многострочные комментарии перед обработкой
-    content = ''.join(lines)
     # Удаляем многострочные комментарии /** ... */
     content = re.sub(r'/\*\*.*?\*/', '', content, flags=re.DOTALL)
     # Удаляем однострочные комментарии /* ... */
@@ -62,17 +67,73 @@ def extract_fields_description(file_path='add_files/Fields_static.ts'):
     return fields_dict
 
 
+def extract_fields_description(file_path='add_files/Fields_static.ts', json_path='fields_descriptions.json'):
+    """
+    Извлекает из файла Fields_static.ts все незакомментированные строки,
+    а затем добавляет каждый элемент в словарь, преобразуя структуру
+    export const name: field = ['name', 'Наименование товара'];
+    в "name": "Наименование товара"
+    
+    Использует кеширование: если хеш файла не изменился, возвращает данные из JSON.
+    
+    Args:
+        file_path: путь к файлу Fields_static.ts
+        json_path: путь к файлу с кешем (fields_descriptions.json)
+        
+    Returns:
+        dict: словарь с полями в формате {"name": "Наименование товара", ...}
+    """
+    # Проверяем существование исходного файла
+    if not os.path.exists(file_path):
+        print(f"Файл {file_path} не найден")
+        return {}
+    
+    # Вычисляем хеш исходного файла
+    current_hash = calculate_file_hash(file_path)
+    
+    # Проверяем существование JSON файла с кешем
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                cache_data = json.load(f)
+            
+            # Если структура правильная и хеш совпадает, возвращаем кешированные данные
+            if isinstance(cache_data, dict) and 'hash' in cache_data and 'fields' in cache_data:
+                if cache_data['hash'] == current_hash:
+                    print(f"Используется кеш из {json_path} (хеш совпадает)")
+                    return cache_data['fields']
+                else:
+                    print(f"Хеш изменился, пересоздаём {json_path}")
+            else:
+                print(f"Некорректная структура кеша, пересоздаём {json_path}")
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Ошибка при чтении кеша: {e}, пересоздаём {json_path}")
+    
+    # Читаем файл и извлекаем поля
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    fields_dict = extract_fields_from_content(content)
+    
+    # Сохраняем результат в JSON с хешем
+    cache_data = {
+        'hash': current_hash,
+        'fields': fields_dict
+    }
+    
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(cache_data, f, ensure_ascii=False, indent=2)
+    
+    print(f"Результат сохранен в {json_path} (новый хеш)")
+    
+    return fields_dict
+
+
 if __name__ == "__main__":
     # Пример использования
     result = extract_fields_description()
-    print("Извлеченные поля:")
+    print(f"\nВсего извлечено полей: {len(result)}")
+    print("\nИзвлеченные поля:")
     for key, value in result.items():
         print(f'  "{key}": "{value}"')
-    
-    # Сохраняем результат в JSON для удобства
-    import json
-    with open('fields_descriptions.json', 'w', encoding='utf-8') as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
-    print(f"\nРезультат сохранен в fields_descriptions.json")
-    print(f"Всего извлечено полей: {len(result)}")
 
