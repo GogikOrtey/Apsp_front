@@ -11,6 +11,15 @@ os.makedirs('data', exist_ok=True)
 
 # Путь к JSON файлу
 JSON_FILE = 'data/submissions.json'
+FIELDS_DESCRIPTIONS_FILE = 'fields_descriptions.json'
+
+def load_fields_descriptions():
+    """Загрузка описаний полей из JSON файла"""
+    if os.path.exists(FIELDS_DESCRIPTIONS_FILE):
+        with open(FIELDS_DESCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get('fields', {})
+    return {}
 
 def save_to_json(data):
     """Сохранение данных в JSON файл"""
@@ -48,27 +57,29 @@ def step0():
 
 @app.route('/step1', methods=['GET', 'POST'])
 def step1():
-    """Шаг 1: Личная информация"""
+    """Шаг 1: Выбор полей"""
+    # Загружаем описания полей
+    fields = load_fields_descriptions()
+    
     if request.method == 'POST':
-        # Сохраняем данные в сессию
-        session['name'] = request.form.get('name', '')
-        session['email'] = request.form.get('email', '')
-        session['phone'] = request.form.get('phone', '')
+        # Сохраняем выбранные поля в сессию
+        selected_fields = request.form.getlist('selected_fields')
+        session['selected_fields'] = selected_fields
         
         # Переходим на следующий шаг
         return redirect(url_for('step2'))
     
     # Отображаем форму с сохраненными данными (если есть)
+    selected_fields = session.get('selected_fields', [])
     return render_template('step1.html', 
-                         name=session.get('name', ''),
-                         email=session.get('email', ''),
-                         phone=session.get('phone', ''))
+                         fields=fields,
+                         selected_fields=selected_fields)
 
 @app.route('/step2', methods=['GET', 'POST'])
 def step2():
     """Шаг 2: Дополнительная информация"""
     # Проверяем, что пользователь прошел первый шаг
-    if 'name' not in session:
+    if 'selected_fields' not in session:
         return redirect(url_for('step1'))
     
     if request.method == 'POST':
@@ -90,7 +101,7 @@ def step2():
 def step3():
     """Шаг 3: Выбор опций"""
     # Проверяем, что пользователь прошел предыдущие шаги
-    if 'name' not in session or 'age' not in session:
+    if 'selected_fields' not in session or 'age' not in session:
         return redirect(url_for('step1'))
     
     if request.method == 'POST':
@@ -112,16 +123,24 @@ def step3():
 def summary():
     """Финальная страница: Подтверждение и итог"""
     # Проверяем, что пользователь прошел все шаги
-    if 'name' not in session or 'age' not in session or 'interests' not in session:
+    if 'selected_fields' not in session or 'age' not in session or 'interests' not in session:
         return redirect(url_for('step1'))
+    
+    # Загружаем описания полей для отображения
+    fields = load_fields_descriptions()
     
     if request.method == 'POST':
         if request.form.get('confirm') == 'yes':
             # Собираем все данные из сессии
+            selected_fields = session.get('selected_fields', [])
+            # Создаем словарь с выбранными полями и их описаниями
+            selected_fields_data = {}
+            for field_key in selected_fields:
+                if field_key in fields:
+                    selected_fields_data[field_key] = fields[field_key]
+            
             form_data = {
-                'name': session.get('name', ''),
-                'email': session.get('email', ''),
-                'phone': session.get('phone', ''),
+                'selected_fields': selected_fields_data,
                 'age': session.get('age', ''),
                 'city': session.get('city', ''),
                 'gender': session.get('gender', ''),
@@ -140,10 +159,14 @@ def summary():
             return redirect(url_for('step3'))
     
     # Собираем все данные для отображения
+    selected_fields = session.get('selected_fields', [])
+    selected_fields_data = {}
+    for field_key in selected_fields:
+        if field_key in fields:
+            selected_fields_data[field_key] = fields[field_key]
+    
     form_data = {
-        'name': session.get('name', ''),
-        'email': session.get('email', ''),
-        'phone': session.get('phone', ''),
+        'selected_fields': selected_fields_data,
         'age': session.get('age', ''),
         'city': session.get('city', ''),
         'gender': session.get('gender', ''),

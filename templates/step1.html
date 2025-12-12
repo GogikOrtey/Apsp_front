@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 
-{% block title %}Шаг 1 - Личная информация{% endblock %}
+{% block title %}Шаг 1 - Выбор полей{% endblock %}
 
 {% block content %}
-<h1>Шаг 1: Личная информация</h1>
+<h1>Выберете поля</h1>
 
 <div class="step-indicator">
     <div class="step active">1</div>
@@ -13,19 +13,22 @@
 </div>
 
 <form method="POST">
-    <div class="form-group">
-        <label for="name">Имя *</label>
-        <input type="text" id="name" name="name" value="{{ name }}" required>
-    </div>
-    
-    <div class="form-group">
-        <label for="email">Email *</label>
-        <input type="email" id="email" name="email" value="{{ email }}" required>
-    </div>
-    
-    <div class="form-group">
-        <label for="phone">Телефон</label>
-        <input type="tel" id="phone" name="phone" value="{{ phone }}" placeholder="+7 (999) 123-45-67">
+    <div class="fields-container">
+        {% for field_key, field_description in fields.items() %}
+        <div class="field-item">
+            <div class="field-content">
+                <span class="field-description">{{ field_description }}</span>
+            </div>
+            <div class="field-checkbox">
+                <input type="checkbox" 
+                       id="field_{{ field_key }}" 
+                       name="selected_fields" 
+                       value="{{ field_key }}"
+                       {% if field_key in selected_fields %}checked{% endif %}>
+                <label for="field_{{ field_key }}"></label>
+            </div>
+        </div>
+        {% endfor %}
     </div>
     
     <div class="btn-group">
@@ -33,5 +36,59 @@
         <button type="submit" class="btn btn-primary">Далее →</button>
     </div>
 </form>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fields-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .field-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px;
+        background: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    
+    .field-item:hover {
+        border-color: #667eea;
+        background: #f0f2ff;
+    }
+    
+    .field-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    
+    .field-description {
+        color: #333;
+        font-size: 16px;
+        font-weight: 500;
+    }
+    
+    .field-checkbox {
+        margin-left: 15px;
+    }
+    
+    .field-checkbox input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+    
+    .field-checkbox label {
+        display: none;
+    }
+</style>
 {% endblock %}
 
