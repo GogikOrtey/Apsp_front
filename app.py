@@ -37,9 +37,14 @@ def save_to_json(data):
 
 @app.route('/')
 def index():
-    """Главная страница - перенаправление на первый шаг"""
+    """Главная страница - перенаправление на нулевой шаг"""
     session.clear()  # Очищаем сессию при начале новой формы
-    return redirect(url_for('step1'))
+    return redirect(url_for('step0'))
+
+@app.route('/step0')
+def step0():
+    """Нулевой шаг: Приветственное сообщение"""
+    return render_template('step0.html')
 
 @app.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -163,7 +168,7 @@ def success():
 def reset():
     """Сброс формы - возврат к началу"""
     session.clear()
-    return redirect(url_for('step1'))
+    return redirect(url_for('step0'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
