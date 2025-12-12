@@ -14,17 +14,25 @@
 
 <form method="POST">
     <div class="fields-container">
+        {% set required_fields = ['name', 'link', 'price', 'stock', 'timestamp'] %}
         {% for field_key, field_description in fields.items() %}
-        <div class="field-item">
+        {% set is_required = field_key in required_fields %}
+        <div class="field-item {% if is_required %}field-item-required{% endif %}">
             <div class="field-content">
                 <span class="field-description">{{ field_description }}</span>
             </div>
             <div class="field-checkbox">
+                {% if is_required %}
+                <div class="lock-icon-container">
+                    <img src="{{ url_for('content', filename='lock_icon.png') }}" alt="Lock" class="lock-icon">
+                    <div class="custom-tooltip">Обязательное поле</div>
+                </div>
+                {% endif %}
                 <input type="checkbox" 
                        id="field_{{ field_key }}" 
                        name="selected_fields" 
                        value="{{ field_key }}"
-                       {% if field_key in selected_fields %}checked{% endif %}>
+                       {% if is_required %}checked disabled{% elif field_key in selected_fields %}checked{% endif %}>
                 <label for="field_{{ field_key }}"></label>
             </div>
         </div>
@@ -80,6 +88,9 @@
     
     .field-checkbox {
         margin-left: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .field-checkbox input[type="checkbox"] {
@@ -89,8 +100,69 @@
         accent-color: #667eea;
     }
     
+    .field-checkbox input[type="checkbox"]:disabled {
+        cursor: default;
+        opacity: 0.7;
+        /* accent-color: #666; */
+        accent-color: #414141;
+    }
+    
     .field-checkbox label {
         display: none;
+    }
+    
+    .lock-icon-container {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        cursor: default;
+    }
+    
+    .custom-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 5px;
+        padding: 6px 10px;
+        background: #333;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        z-index: 1000;
+    }
+    
+    .custom-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #333;
+    }
+    
+    .custom-tooltip.show {
+        opacity: 1;
+    }
+    
+    .lock-icon {
+        width: 18px;
+        height: 18px;
+        display: block;
+    }
+    
+    .field-item-required {
+        cursor: default;
+    }
+    
+    .field-item-required:hover {
+        border-color: #e0e0e0;
+        background: #f8f9fa;
     }
 </style>
 {% endblock %}
@@ -101,6 +173,11 @@
         const fieldItems = document.querySelectorAll('.field-item');
         
         fieldItems.forEach(function(item) {
+            // Пропускаем обязательные поля - они не должны переключаться
+            if (item.classList.contains('field-item-required')) {
+                return;
+            }
+            
             item.addEventListener('click', function(e) {
                 // Предотвращаем двойное переключение, если клик был непосредственно на чекбоксе
                 if (e.target.type === 'checkbox') {
@@ -108,9 +185,48 @@
                 }
                 
                 const checkbox = item.querySelector('input[type="checkbox"]');
-                if (checkbox) {
+                if (checkbox && !checkbox.disabled) {
                     checkbox.checked = !checkbox.checked;
                 }
+            });
+        });
+        
+        // Убеждаемся, что обязательные поля всегда отправляются
+        // Disabled чекбоксы не отправляются, поэтому добавляем скрытые поля
+        const form = document.querySelector('form');
+        const requiredFields = ['name', 'link', 'price', 'stock', 'timestamp'];
+        
+        requiredFields.forEach(function(fieldKey) {
+            const checkbox = document.getElementById('field_' + fieldKey);
+            if (checkbox && checkbox.disabled) {
+                // Создаем скрытое поле для обязательных полей
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'selected_fields';
+                hiddenInput.value = fieldKey;
+                form.appendChild(hiddenInput);
+            }
+        });
+        
+        // Обработка подсказки с задержкой для замочков
+        const lockIconContainers = document.querySelectorAll('.lock-icon-container');
+        let tooltipTimeout = null;
+        
+        lockIconContainers.forEach(function(container) {
+            const tooltip = container.querySelector('.custom-tooltip');
+            
+            container.addEventListener('mouseenter', function() {
+                tooltipTimeout = setTimeout(function() {
+                    tooltip.classList.add('show');
+                }, 200);
+            });
+            
+            container.addEventListener('mouseleave', function() {
+                if (tooltipTimeout) {
+                    clearTimeout(tooltipTimeout);
+                    tooltipTimeout = null;
+                }
+                tooltip.classList.remove('show');
             });
         });
     });

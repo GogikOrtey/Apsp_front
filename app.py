@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 import json
 import os
 from datetime import datetime
@@ -192,6 +192,11 @@ def reset():
     """Сброс формы - возврат к началу"""
     session.clear()
     return redirect(url_for('step0'))
+
+@app.route('/content/<path:filename>')
+def content(filename):
+    """Обслуживание статических файлов из папки content"""
+    return send_from_directory('content', filename)
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
