@@ -69,6 +69,11 @@ def step1():
         # (в порядке, как они идут в fields)
         fields_order = list(fields.keys())
         selected_fields_sorted = [field for field in fields_order if field in selected_fields]
+        
+        # Удаляем "timestamp" из выбранных полей
+        if 'timestamp' in selected_fields_sorted:
+            selected_fields_sorted.remove('timestamp')
+        
         session['selected_fields'] = selected_fields_sorted
         
         # Переходим на следующий шаг
