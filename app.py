@@ -64,7 +64,12 @@ def step1():
     if request.method == 'POST':
         # Сохраняем выбранные поля в сессию
         selected_fields = request.form.getlist('selected_fields')
-        session['selected_fields'] = selected_fields
+        
+        # Сортируем выбранные поля в том же порядке, как они расположены на странице
+        # (в порядке, как они идут в fields)
+        fields_order = list(fields.keys())
+        selected_fields_sorted = [field for field in fields_order if field in selected_fields]
+        session['selected_fields'] = selected_fields_sorted
         
         # Переходим на следующий шаг
         return redirect(url_for('step2'))
@@ -81,6 +86,16 @@ def step2():
     # Проверяем, что пользователь прошел первый шаг
     if 'selected_fields' not in session:
         return redirect(url_for('step1'))
+    
+    # Выводим выбранные поля в консоль сервера при переходе на шаг 2
+    if request.method == 'GET':
+        selected_fields = session.get('selected_fields', [])
+        print('\n=== Выбранные поля (переход на шаг 2) ===')
+        print(f'Количество выбранных полей: {len(selected_fields)}')
+        print('Выбранные поля:')
+        for field in selected_fields:
+            print(f'  - {field}')
+        print('=' * 30 + '\n')
     
     if request.method == 'POST':
         # Сохраняем данные в сессию
