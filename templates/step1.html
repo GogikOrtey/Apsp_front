@@ -199,6 +199,12 @@
         border-color: #5568d3;
         background: #e8ebff;
     }
+    
+    /* Затемнение при нажатии (только для элементов без замочка) */
+    .field-item-pressed:not(.field-item-required) {
+        filter: brightness(0.9) !important;
+        /* box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important; */
+    }
 </style>
 {% endblock %}
 
@@ -236,6 +242,26 @@
                     updateSelectedState(item);
                 });
             }
+            
+            // Добавляем класс для эффекта нажатия
+            item.addEventListener('mousedown', function(e) {
+                if (!item.classList.contains('field-item-required') && e.target.type !== 'checkbox') {
+                    item.classList.add('field-item-pressed');
+                }
+            });
+            
+            item.addEventListener('mouseup', function(e) {
+                if (!item.classList.contains('field-item-required')) {
+                    item.classList.remove('field-item-pressed');
+                }
+            });
+            
+            // Убираем класс при уходе мыши (на случай, если пользователь уведет мышь)
+            item.addEventListener('mouseleave', function(e) {
+                if (!item.classList.contains('field-item-required')) {
+                    item.classList.remove('field-item-pressed');
+                }
+            });
             
             item.addEventListener('click', function(e) {
                 // Предотвращаем двойное переключение, если клик был непосредственно на чекбоксе
