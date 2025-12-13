@@ -155,12 +155,11 @@ def step2():
             for field_key in selected_fields:
                 field_name = f'example_{example_num}_{field_key}'
                 field_value = request.form.get(field_name, '')
-                if field_value:  # Добавляем только заполненные поля
-                    example_dict[field_key] = field_value
+                # Добавляем все поля, даже с пустыми значениями
+                example_dict[field_key] = field_value
             
-            # Добавляем пример только если в нём есть хотя бы одно заполненное поле
-            if example_dict:
-                examples_list.append(example_dict)
+            # Добавляем все примеры, даже если все поля пустые
+            examples_list.append(example_dict)
         
         # Формируем итоговый JSON
         result_json = {
