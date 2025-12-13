@@ -87,14 +87,17 @@ def step1():
 
 @app.route('/step2', methods=['GET', 'POST'])
 def step2():
-    """Шаг 2: Дополнительная информация"""
+    """Шаг 2: Заполнение полей примерами"""
     # Проверяем, что пользователь прошел первый шаг
     if 'selected_fields' not in session:
         return redirect(url_for('step1'))
     
+    # Загружаем описания полей
+    fields = load_fields_descriptions()
+    selected_fields = session.get('selected_fields', [])
+    
     # Выводим выбранные поля в консоль сервера при переходе на шаг 2
     if request.method == 'GET':
-        selected_fields = session.get('selected_fields', [])
         print('\n=== Выбранные поля (переход на шаг 2) ===')
         print(f'Количество выбранных полей: {len(selected_fields)}')
         print('Выбранные поля:')
@@ -103,25 +106,65 @@ def step2():
         print('=' * 30 + '\n')
     
     if request.method == 'POST':
-        # Сохраняем данные в сессию
-        session['age'] = request.form.get('age', '')
-        session['city'] = request.form.get('city', '')
-        session['gender'] = request.form.get('gender', '')
+        # Собираем данные примеров из формы
+        # Формат полей: example_{номер}_{field_key}
+        examples_data = {}
+        
+        # Определяем количество примеров по форме
+        example_numbers = set()
+        for key in request.form.keys():
+            if key.startswith('example_'):
+                parts = key.split('_', 2)
+                if len(parts) >= 3:
+                    example_numbers.add(parts[1])
+        
+        # Сортируем номера примеров
+        sorted_example_numbers = sorted([int(num) for num in example_numbers])
+        
+        # Формируем список примеров
+        examples_list = []
+        for example_num in sorted_example_numbers:
+            example_dict = {}
+            for field_key in selected_fields:
+                field_name = f'example_{example_num}_{field_key}'
+                field_value = request.form.get(field_name, '')
+                if field_value:  # Добавляем только заполненные поля
+                    example_dict[field_key] = field_value
+            
+            # Добавляем пример только если в нём есть хотя бы одно заполненное поле
+            if example_dict:
+                examples_list.append(example_dict)
+        
+        # Формируем итоговый JSON
+        result_json = {
+            "simple": examples_list
+        }
+        
+        # Выводим результат в консоль
+        print('\n=== Результаты заполнения полей (шаг 2) ===')
+        print(json.dumps(result_json, ensure_ascii=False, indent=2))
+        print('=' * 30 + '\n')
+        
+        # Сохраняем данные примеров в сессию
+        session['examples_data'] = result_json
         
         # Переходим на следующий шаг
         return redirect(url_for('step3'))
     
     # Отображаем форму с сохраненными данными
+    # Создаем словарь описаний только для выбранных полей
+    fields_descriptions = {field_key: fields.get(field_key, field_key) 
+                          for field_key in selected_fields}
+    
     return render_template('step2.html',
-                         age=session.get('age', ''),
-                         city=session.get('city', ''),
-                         gender=session.get('gender', ''))
+                         selected_fields=selected_fields,
+                         fields_descriptions=fields_descriptions)
 
 @app.route('/step3', methods=['GET', 'POST'])
 def step3():
     """Шаг 3: Выбор опций"""
     # Проверяем, что пользователь прошел предыдущие шаги
-    if 'selected_fields' not in session or 'age' not in session:
+    if 'selected_fields' not in session or 'examples_data' not in session:
         return redirect(url_for('step1'))
     
     if request.method == 'POST':
@@ -143,7 +186,7 @@ def step3():
 def summary():
     """Финальная страница: Подтверждение и итог"""
     # Проверяем, что пользователь прошел все шаги
-    if 'selected_fields' not in session or 'age' not in session or 'interests' not in session:
+    if 'selected_fields' not in session or 'examples_data' not in session or 'interests' not in session:
         return redirect(url_for('step1'))
     
     # Загружаем описания полей для отображения
@@ -161,9 +204,7 @@ def summary():
             
             form_data = {
                 'selected_fields': selected_fields_data,
-                'age': session.get('age', ''),
-                'city': session.get('city', ''),
-                'gender': session.get('gender', ''),
+                'examples_data': session.get('examples_data', {}),
                 'interests': session.get('interests', []),
                 'newsletter': session.get('newsletter', 'no'),
                 'comments': session.get('comments', '')
@@ -187,9 +228,7 @@ def summary():
     
     form_data = {
         'selected_fields': selected_fields_data,
-        'age': session.get('age', ''),
-        'city': session.get('city', ''),
-        'gender': session.get('gender', ''),
+        'examples_data': session.get('examples_data', {}),
         'interests': session.get('interests', []),
         'newsletter': session.get('newsletter', 'no'),
         'comments': session.get('comments', '')

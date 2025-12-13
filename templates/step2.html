@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 
-{% block title %}Шаг 2 - Дополнительная информация{% endblock %}
+{% block title %}Шаг 2 - Заполните поля примерами{% endblock %}
 
 {% block content %}
-<h1>Шаг 2: Дополнительная информация</h1>
+<h1>Заполните поля примерами</h1>
 
 <div class="step-indicator">
     <div class="step completed">1</div>
@@ -12,34 +12,14 @@
     <div class="step">4</div>
 </div>
 
-<form method="POST">
-    <div class="form-group">
-        <label for="age">Возраст</label>
-        <input type="number" id="age" name="age" value="{{ age }}" min="1" max="120">
+<form method="POST" id="examplesForm">
+    <div id="examples-container">
+        <!-- Первый блок примера будет здесь -->
     </div>
     
-    <div class="form-group">
-        <label for="city">Город</label>
-        <input type="text" id="city" name="city" value="{{ city }}" placeholder="Москва">
-    </div>
-    
-    <div class="form-group">
-        <label>Пол</label>
-        <div class="radio-group">
-            <div class="radio-item">
-                <input type="radio" id="gender_male" name="gender" value="male" {% if gender == 'male' %}checked{% endif %}>
-                <label for="gender_male">Мужской</label>
-            </div>
-            <div class="radio-item">
-                <input type="radio" id="gender_female" name="gender" value="female" {% if gender == 'female' %}checked{% endif %}>
-                <label for="gender_female">Женский</label>
-            </div>
-            <div class="radio-item">
-                <input type="radio" id="gender_other" name="gender" value="other" {% if gender == 'other' %}checked{% endif %}>
-                <label for="gender_other">Другое</label>
-            </div>
-        </div>
-    </div>
+    <button type="button" id="add-example-btn" class="btn btn-add">
+        <span class="btn-add-icon">+</span> Добавить ещё пример
+    </button>
     
     <div class="btn-group">
         <a href="{{ url_for('step1') }}" class="btn btn-secondary">← Назад</a>
@@ -48,3 +28,192 @@
 </form>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .example-block {
+        background: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .example-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .example-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .example-delete-btn {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 5px;
+        background: #dc3545;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s;
+    }
+    
+    .example-delete-btn:hover {
+        background: #c82333;
+    }
+    
+    .example-delete-btn:active {
+        background: #bd2130;
+    }
+    
+    .field-input-group {
+        margin-bottom: 20px;
+    }
+    
+    .field-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+    }
+    
+    .field-textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 16px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 60px;
+        transition: border-color 0.3s;
+    }
+    
+    .field-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .btn-add {
+        background: #667eea;
+        color: white;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .btn-add:hover {
+        background: #5568d3;
+    }
+    
+    .btn-add:active {
+        background: #4a5bc0;
+    }
+    
+    .btn-add-icon {
+        font-size: 20px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Данные о выбранных полях из сервера
+    const selectedFields = {{ selected_fields | tojson }} || [];
+    const fieldsDescriptions = {{ fields_descriptions | tojson }} || {};
+    
+    let exampleCounter = 1;
+    
+    // Функция создания блока примера
+    function createExampleBlock(exampleNumber, isFirst = false) {
+        const block = document.createElement('div');
+        block.className = 'example-block';
+        block.setAttribute('data-example-index', exampleNumber);
+        
+        let headerHTML = `<div class="example-header">
+            <div class="example-title">Пример ${exampleNumber}</div>`;
+        
+        if (!isFirst) {
+            headerHTML += `<button type="button" class="example-delete-btn" onclick="deleteExampleBlock(this)">-</button>`;
+        }
+        
+        headerHTML += `</div>`;
+        
+        let fieldsHTML = '';
+        selectedFields.forEach(fieldKey => {
+            const fieldDescription = fieldsDescriptions[fieldKey] || fieldKey;
+            fieldsHTML += `
+                <div class="field-input-group">
+                    <label class="field-label">${fieldDescription}</label>
+                    <textarea 
+                        class="field-textarea" 
+                        name="example_${exampleNumber}_${fieldKey}"
+                        rows="2"
+                        placeholder="Введите значение для ${fieldDescription}"></textarea>
+                </div>
+            `;
+        });
+        
+        block.innerHTML = headerHTML + fieldsHTML;
+        return block;
+    }
+    
+    // Функция удаления блока примера
+    function deleteExampleBlock(button) {
+        const block = button.closest('.example-block');
+        block.remove();
+        updateExampleNumbers();
+    }
+    
+    // Функция обновления номеров примеров после удаления
+    function updateExampleNumbers() {
+        const blocks = document.querySelectorAll('.example-block');
+        blocks.forEach((block, index) => {
+            const newNumber = index + 1;
+            const titleElement = block.querySelector('.example-title');
+            if (titleElement) {
+                titleElement.textContent = `Пример ${newNumber}`;
+            }
+            
+            // Обновляем имена полей
+            block.setAttribute('data-example-index', newNumber);
+            const textareas = block.querySelectorAll('textarea');
+            textareas.forEach(textarea => {
+                const nameMatch = textarea.name.match(/^example_(\d+)_(.+)$/);
+                if (nameMatch) {
+                    textarea.name = `example_${newNumber}_${nameMatch[2]}`;
+                }
+            });
+        });
+    }
+    
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('examples-container');
+        
+        // Создаем первый блок примера
+        const firstBlock = createExampleBlock(1, true);
+        container.appendChild(firstBlock);
+        
+        // Обработчик кнопки добавления примера
+        document.getElementById('add-example-btn').addEventListener('click', function() {
+            exampleCounter++;
+            const newBlock = createExampleBlock(exampleCounter, false);
+            container.appendChild(newBlock);
+        });
+    });
+</script>
+{% endblock %}
