@@ -74,16 +74,43 @@ def step1():
         if 'timestamp' in selected_fields_sorted:
             selected_fields_sorted.remove('timestamp')
         
+        # Удаляем "stock" из выбранных полей и заменяем на триггеры
+        if 'stock' in selected_fields_sorted:
+            selected_fields_sorted.remove('stock')
+            # Добавляем триггеры вместо stock
+            if 'InStock_trigger' not in selected_fields_sorted:
+                selected_fields_sorted.append('InStock_trigger')
+            if 'OutOfStock_trigger' not in selected_fields_sorted:
+                selected_fields_sorted.append('OutOfStock_trigger')
+        
         session['selected_fields'] = selected_fields_sorted
         
         # Переходим на следующий шаг
         return redirect(url_for('step2'))
     
     # Отображаем форму с сохраненными данными (если есть)
+    # На первом шаге показываем только "stock", а не триггеры
+    # Фильтруем поля для отображения: убираем триггеры, оставляем stock
+    fields_for_display = {k: v for k, v in fields.items() 
+                         if k not in ['InStock_trigger', 'OutOfStock_trigger']}
+    
+    # Восстанавливаем selected_fields для отображения: если есть триггеры, заменяем их на stock
     selected_fields = session.get('selected_fields', [])
+    selected_fields_for_display = []
+    has_triggers = False
+    for field in selected_fields:
+        if field in ['InStock_trigger', 'OutOfStock_trigger']:
+            has_triggers = True
+        else:
+            selected_fields_for_display.append(field)
+    
+    # Если были триггеры, добавляем stock в selected_fields_for_display
+    if has_triggers and 'stock' not in selected_fields_for_display:
+        selected_fields_for_display.append('stock')
+    
     return render_template('step1.html', 
-                         fields=fields,
-                         selected_fields=selected_fields)
+                         fields=fields_for_display,
+                         selected_fields=selected_fields_for_display)
 
 @app.route('/step2', methods=['GET', 'POST'])
 def step2():

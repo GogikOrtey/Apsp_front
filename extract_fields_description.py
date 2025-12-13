@@ -115,6 +115,10 @@ def extract_fields_description(file_path='add_files/Fields_static.ts', json_path
     
     fields_dict = extract_fields_from_content(content)
     
+    # Добавляем дополнительные поля в конец
+    fields_dict["InStock_trigger"] = "Триггер наличия товара"
+    fields_dict["OutOfStock_trigger"] = "Триггер отсутствия товара"
+    
     # Сохраняем результат в JSON с хешем
     cache_data = {
         'hash': current_hash,

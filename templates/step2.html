@@ -132,7 +132,9 @@
 {% block extra_js %}
 <script>
     // Данные о выбранных полях из сервера
+    // @ts-ignore - Jinja2 template syntax, will be processed by server
     const selectedFields = {{ selected_fields | tojson }} || [];
+    // @ts-ignore - Jinja2 template syntax, will be processed by server
     const fieldsDescriptions = {{ fields_descriptions | tojson }} || {};
     
     let exampleCounter = 1;
