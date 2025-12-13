@@ -201,12 +201,18 @@
     }
     
     /* Увеличение насыщенности при нажатии (только для элементов без замочка) */
-    .field-item-pressed:not(.field-item-required) {
-        /* TODO Потом тут подобрать наиболее красивые стили взаимодействия с элементами списка */
-        filter: brightness(0.9) !important;
-        /* filter: brightness(1.15) !important; */
-        /* box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important; */
-        /* filter: saturate(180%) !important; */
+    .field-item-pressed:not(.field-item-required):not(.field-item-selected) {
+        background: #e8f0ff !important;
+        border-color: #7d9aff !important;
+        transform: scale(0.98);
+        transition: none !important;
+    }
+    
+    .field-item-pressed.field-item-selected:not(.field-item-required) {
+        background: #d0d9ff !important;
+        border-color: #3d52c4 !important;
+        transform: scale(0.98);
+        transition: none !important;
     }
 </style>
 {% endblock %}
@@ -248,9 +254,14 @@
             
             // Добавляем класс для эффекта нажатия
             item.addEventListener('mousedown', function(e) {
-                if (!item.classList.contains('field-item-required') && e.target.type !== 'checkbox') {
-                    item.classList.add('field-item-pressed');
+                // Пропускаем только если это обязательное поле или клик на чекбоксе/замочке
+                if (item.classList.contains('field-item-required')) {
+                    return;
                 }
+                if (e.target.type === 'checkbox' || e.target.closest('.lock-icon-container')) {
+                    return;
+                }
+                item.classList.add('field-item-pressed');
             });
             
             item.addEventListener('mouseup', function(e) {
