@@ -15,12 +15,39 @@
 </div>
 
 <form method="POST" id="codeGenerationForm">
-    <div class="field-input-group">
-        <label class="field-label">
-            <span class="field-description">Введите код</span>
-            <span class="field-name">code</span>
-        </label>
-        <textarea class="field-textarea" name="code" rows="1">{{ saved_data.get('code', '') }}</textarea>
+    <div class="accordion-container">
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">Log</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p class="accordion-text">Текст для Log блока</p>
+                <textarea class="accordion-textarea" readonly>Логи будут отображаться здесь</textarea>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">Code gen</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p class="accordion-text">Текст для Code gen блока</p>
+                <textarea class="accordion-textarea" readonly>Сгенерированный код будет отображаться здесь</textarea>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">Status</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p class="accordion-text">Текст для Status блока</p>
+                <textarea class="accordion-textarea" readonly>Статус будет отображаться здесь</textarea>
+            </div>
+        </div>
     </div>
 
     <div class="btn-group">
@@ -36,46 +63,87 @@
         max-width: 800px !important;
     }
 
-    .field-input-group {
-        margin-bottom: 15px;
-        position: relative;
-    }
-
-    .field-label {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 6px;
-        color: #555;
-        font-weight: 500;
-    }
-
-    .field-description {
-        flex: 1;
-    }
-
-    .field-name {
-        margin-left: 15px;
-        color: #888;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9em;
-    }
-
-    .field-textarea {
+    .accordion-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
         width: 100%;
-        padding: 10px 12px;
+    }
+
+    .accordion-item {
+        width: 100%;
         border: 2px solid #e0e0e0;
         border-radius: 5px;
-        font-size: 16px;
-        font-family: inherit;
-        resize: none;
-        min-height: 1.5em;
-        line-height: 1.5;
         overflow: hidden;
         transition: border-color 0.3s;
     }
 
-    .field-textarea:focus {
+    .accordion-item:hover {
+        border-color: #667eea;
+    }
+
+    .accordion-header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        padding: 15px 20px;
+        background-color: #f8f9fa;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.3s;
+    }
+
+    .accordion-header:hover {
+        background-color: #e9ecef;
+    }
+
+    .accordion-title {
+        font-weight: 600;
+        font-size: 18px;
+        color: #333;
+    }
+
+    .accordion-icon {
+        font-size: 14px;
+        color: #667eea;
+        transition: transform 0.3s;
+    }
+
+    .accordion-item.active .accordion-icon {
+        transform: rotate(180deg);
+    }
+
+    .accordion-content {
+        display: none;
+        padding: 20px;
+        background-color: #fff;
+    }
+
+    .accordion-item.active .accordion-content {
+        display: block;
+    }
+
+    .accordion-text {
+        margin-bottom: 15px;
+        color: #555;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .accordion-textarea {
+        width: 100%;
+        height: 300px;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 14px;
+        font-family: 'Courier New', monospace;
+        resize: none;
+        background-color: #f8f9fa;
+        color: #333;
+    }
+
+    .accordion-textarea:focus {
         outline: none;
         border-color: #667eea;
     }
@@ -96,27 +164,20 @@
 
 {% block extra_js %}
 <script>
-    // Функция автоматического изменения высоты textarea
-    function autoResizeTextarea(textarea) {
-        // Сбрасываем высоту, чтобы получить правильную scrollHeight
-        textarea.style.height = 'auto';
-        // Устанавливаем высоту равной scrollHeight (содержимое + padding)
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }
-
-    // Инициализация при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function () {
-        // Инициализируем автоизменение высоты для всех textarea
-        const allTextareas = document.querySelectorAll('.field-textarea');
-        allTextareas.forEach(textarea => {
-            // Устанавливаем начальную высоту
-            autoResizeTextarea(textarea);
-
-            // Обработчик изменения содержимого
-            textarea.addEventListener('input', function () {
-                autoResizeTextarea(this);
-            });
+    // Функция переключения раскрывающегося блока
+    function toggleAccordion(header) {
+        const accordionItem = header.parentElement;
+        const isActive = accordionItem.classList.contains('active');
+        
+        // Закрываем все блоки
+        document.querySelectorAll('.accordion-item').forEach(item => {
+            item.classList.remove('active');
         });
-    });
+        
+        // Открываем текущий блок, если он был закрыт
+        if (!isActive) {
+            accordionItem.classList.add('active');
+        }
+    }
 </script>
 {% endblock %}
