@@ -13,6 +13,11 @@
     <div class="step">5</div>
 </div>
 
+<div class="debug-info-box">
+    <img src="{{ url_for('content', filename='info_icon.png') }}" alt="Info">
+    <div class="debug-text">Данный шаг в будущем будет автоматизирован</div>
+</div>
+
 <form method="POST" id="parsePageForm">
     <div class="field-input-group">
         <label class="field-label">
@@ -177,6 +182,34 @@
         padding: 5px 8px;
         min-height: 1.2em;
         font-size: 14px;
+    }
+    
+    .debug-info-box {
+        width: 100%;
+        padding: 10px 15px 13px 5px;
+        margin-bottom: 20px;
+        background-color: #e3f2fd;
+        border: 2px solid #2196f3;
+        border-radius: 13px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .debug-info-box img {
+        width: 35px;
+        height: 35px;
+        flex-shrink: 0;
+        margin-left: 5px;
+        margin-top: 2px;
+    }
+    
+    .debug-info-box .debug-text {
+        flex: 1;
+        text-align: center;
+        color: #1976d2;
+        font-weight: 500;
+        font-size: 17px;
     }
 </style>
 {% endblock %}
