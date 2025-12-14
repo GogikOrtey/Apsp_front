@@ -4,6 +4,36 @@
 """
 import json
 from collections import OrderedDict
+from urllib.parse import urlparse
+
+
+def _extract_host_from_url(url: str) -> str:
+    """
+    Извлекает host (scheme://netloc) из URL.
+
+    Примеры:
+      - https://c-s-k.ru/catalog/... -> https://c-s-k.ru
+      - c-s-k.ru/catalog/... -> https://c-s-k.ru
+
+    Возвращает пустую строку, если извлечь не удалось.
+    """
+    if not url or not isinstance(url, str):
+        return ""
+
+    url = url.strip()
+    if not url:
+        return ""
+
+    # urlparse("example.com/path") трактует это как path, поэтому добавляем "//"
+    # (тогда домен попадает в netloc). Схему по умолчанию считаем https.
+    parsed = urlparse(url if "://" in url else f"//{url}")
+
+    netloc = parsed.netloc.strip()
+    if not netloc:
+        return ""
+
+    scheme = (parsed.scheme or "https").strip()
+    return f"{scheme}://{netloc}"
 
 
 def _order_examples(examples_data, selected_fields):
@@ -55,9 +85,17 @@ def process_results(examples_data, search_requests_data, selected_fields=None):
     simple_ordered = _order_examples(examples_data, selected_fields or [])
     search_requests_ordered = _order_search_requests(search_requests_data)
 
+    # Автозаполнение host из первой ссылки links.simple[0].link (если есть)
+    first_link = ""
+    if simple_ordered and isinstance(simple_ordered, list):
+        first_item = simple_ordered[0] if len(simple_ordered) > 0 else None
+        if isinstance(first_item, dict):
+            first_link = first_item.get("link", "") or ""
+    extracted_host = _extract_host_from_url(first_link)
+
     # Инициализируем структуру результата с сохранением порядка ключей
     data_input_table = OrderedDict([
-        ("host", ""),
+        ("host", extracted_host),
         ("fields_str", ""),
         ("links", OrderedDict([
             ("simple", simple_ordered)
