@@ -214,13 +214,15 @@
     // Настройки
     // ===========================
     // Скорость "печати" кода (символов в секунду). Это единственная настройка, которую нужно менять.
-    const CODE_TYPEWRITER_CHARS_PER_SEC = 180;
+    // const CODE_TYPEWRITER_CHARS_PER_SEC = 320;
+    const CODE_TYPEWRITER_CHARS_PER_SEC = 450;
 
     // Инициализация CodeMirror для отображения кода
     const codeTextarea = document.getElementById('code-gen-textarea');
     let codeEditor = null;
     let codeTypewriterTimer = null;
     let codeTypewriterInProgress = false;
+    let lastPageScrollAt = 0;
     
     if (codeTextarea) {
         codeEditor = CodeMirror.fromTextArea(codeTextarea, {
@@ -321,12 +323,15 @@
             .then(text => {
                 startCodeTypewriter(text, function onDone() {
                     // Когда весь код "сгенерировался" и отобразился:
+                    // делаем паузу 3 секунды и потом
                     // - свернуть 2й блок (Code gen)
                     // - раскрыть 3й блок (Status)
-                    const codeGenBlock = document.getElementById('code-gen-block');
-                    if (codeGenBlock) codeGenBlock.classList.remove('active');
-                    const statusBlock = document.getElementById('status-block');
-                    if (statusBlock) openOnlyAccordionItem(statusBlock);
+                    setTimeout(function() {
+                        const codeGenBlock = document.getElementById('code-gen-block');
+                        if (codeGenBlock) codeGenBlock.classList.remove('active');
+                        const statusBlock = document.getElementById('status-block');
+                        if (statusBlock) openOnlyAccordionItem(statusBlock);
+                    }, 3000);
                 });
             })
             .catch(error => {
@@ -340,6 +345,30 @@
             codeTypewriterTimer = null;
         }
         codeTypewriterInProgress = false;
+    }
+
+    function keepCodeBlockBottomInView() {
+        if (!codeEditor) return;
+
+        const wrapper = codeEditor.getWrapperElement();
+        if (!wrapper) return;
+
+        const rect = wrapper.getBoundingClientRect();
+        const bottom = rect.bottom;
+        const viewportH = window.innerHeight || document.documentElement.clientHeight;
+        const margin = 24;
+
+        // Если нижняя граница редактора ушла ниже экрана — доскролливаем страницу вниз,
+        // чтобы низ блока снова оказался в видимой области.
+        if (bottom > viewportH - margin) {
+            const now = Date.now();
+            // лёгкая "защита" от слишком частых скроллов
+            if (now - lastPageScrollAt < 50) return;
+            lastPageScrollAt = now;
+
+            const delta = bottom - (viewportH - margin);
+            window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+        }
     }
 
     function startCodeTypewriter(fullText, onComplete) {
@@ -383,6 +412,9 @@
                 codeEditor.refresh();
             }
 
+            // Если блок уходит ниже экрана — прокручиваем страницу к его низу
+            keepCodeBlockBottomInView();
+
             if (idx >= fullText.length) {
                 stopCodeTypewriter();
                 // Финальная подгонка высоты
@@ -391,6 +423,7 @@
                     const height = codeEditor.getScrollInfo().height;
                     codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
                     codeEditor.refresh();
+                    keepCodeBlockBottomInView();
                 }, 0);
                 if (typeof onComplete === 'function') onComplete();
             }
