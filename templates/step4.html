@@ -4,7 +4,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-<!-- Популярные темные темы, похожие на VS Dark -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
@@ -44,6 +43,31 @@
     .error-message.show {
         display: block;
     }
+    
+    .debug-info-box {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 20px;
+        background-color: #e3f2fd;
+        border: 2px solid #2196f3;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .debug-info-box img {
+        width: 50px;
+        height: 50px;
+        flex-shrink: 0;
+    }
+    
+    .debug-info-box .debug-text {
+        flex: 1;
+        text-align: center;
+        color: #1976d2;
+        font-weight: 700;
+    }
 </style>
 {% endblock %}
 
@@ -56,6 +80,11 @@
     <div class="step completed">3</div>
     <div class="step active">4</div>
     <div class="step">5</div>
+</div>
+
+<div class="debug-info-box">
+    <img src="{{ url_for('content', filename='info_icon.png') }}" alt="Info">
+    <div class="debug-text">Данный шаг нужен только для отладки</div>
 </div>
 
 <form method="POST" id="json-form">
