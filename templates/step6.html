@@ -16,14 +16,14 @@
 
 <form method="POST" id="codeGenerationForm">
     <div class="accordion-container">
-        <div class="accordion-item">
+        <div class="accordion-item active">
             <div class="accordion-header" onclick="toggleAccordion(this)">
                 <span class="accordion-title">Log</span>
                 <span class="accordion-icon">▼</span>
             </div>
             <div class="accordion-content">
                 <p class="accordion-text">Текст для Log блока</p>
-                <textarea class="accordion-textarea" readonly>Логи будут отображаться здесь</textarea>
+                <textarea id="log-textarea" class="accordion-textarea" readonly>Логи будут отображаться здесь</textarea>
             </div>
         </div>
 
@@ -183,5 +183,43 @@
             accordionItem.classList.add('active');
         }
     }
+
+    // Функция для обновления содержимого лог-файла
+    function updateLogContent() {
+        const logTextarea = document.getElementById('log-textarea');
+        if (!logTextarea) return;
+
+        fetch('/api/log')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка при загрузке логов');
+                }
+                return response.text();
+            })
+            .then(text => {
+                const currentScrollTop = logTextarea.scrollTop;
+                const isScrolledToBottom = logTextarea.scrollHeight - logTextarea.clientHeight <= currentScrollTop + 1;
+                
+                logTextarea.value = text;
+                
+                // Если пользователь был внизу, прокручиваем вниз после обновления
+                if (isScrolledToBottom) {
+                    logTextarea.scrollTop = logTextarea.scrollHeight;
+                } else {
+                    logTextarea.scrollTop = currentScrollTop;
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении логов:', error);
+            });
+    }
+
+    // Обновляем содержимое при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        updateLogContent();
+        
+        // Обновляем содержимое каждые 500 мс (2 раза в секунду)
+        setInterval(updateLogContent, 500);
+    });
 </script>
 {% endblock %}

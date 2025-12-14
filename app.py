@@ -477,6 +477,20 @@ def content(filename):
     """Обслуживание статических файлов из папки content"""
     return send_from_directory('content', filename)
 
+@app.route('/api/log')
+def get_log():
+    """Возвращает содержимое файла output.log"""
+    log_file_path = 'content_files/output.log'
+    try:
+        if os.path.exists(log_file_path):
+            with open(log_file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return Response(content, mimetype='text/plain; charset=utf-8')
+        else:
+            return Response('', mimetype='text/plain; charset=utf-8')
+    except Exception as e:
+        return Response(f'Ошибка чтения файла: {str(e)}', mimetype='text/plain; charset=utf-8', status=500)
+
 @app.route('/.well-known/appspecific/com.chrome.devtools.json')
 def chrome_devtools():
     """Обработчик для Chrome DevTools - убирает 404 предупреждения"""
