@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 import json
 import os
 from datetime import datetime
+from result_processer import process_results
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'  # Важно для работы сессий
@@ -230,6 +231,10 @@ def step3():
         
         # Сохраняем данные в сессию
         session['search_requests_data'] = result_json
+        
+        # Обрабатываем и валидируем данные из шагов 2 и 3
+        examples_data = session.get('examples_data', {})
+        process_results(examples_data, result_json)
         
         # Переходим на следующий шаг (step4 - бывший summary)
         return redirect(url_for('step4'))
