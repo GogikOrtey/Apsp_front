@@ -625,5 +625,10 @@ def chrome_devtools():
     return Response('{}', mimetype='application/json')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    # В режиме debug Flask включает reloader, который поднимает дочерний процесс.
+    # При запуске из IDE/DebugPy это часто выглядит как "Restarting with stat",
+    # после чего родительский процесс завершается (в терминале снова появляется приглашение),
+    # а все request-логи (GET/POST) и print() оказываются в другом процессе/консоли.
+    # Отключаем reloader, чтобы весь вывод стабильно попадал в одно окно.
+    app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=False)
 
