@@ -46,6 +46,63 @@ def save_to_json(data):
     with open(JSON_FILE, 'w', encoding='utf-8') as f:
         json.dump(submissions, f, ensure_ascii=False, indent=2, sort_keys=False)
 
+
+def reorder_result_json(result_json, selected_fields):
+    """
+    Приводит сохраненный result_json к стабильному порядку ключей,
+    чтобы при возврате с шага 5 на шаг 4 не было сортировки.
+    """
+    if not result_json:
+        return result_json
+
+    selected_fields = selected_fields or []
+
+    # Переупорядочиваем примеры simple в links
+    examples = result_json.get('links', {}).get('simple', [])
+    ordered_examples = []
+    for example in examples:
+        ordered = OrderedDict()
+        # сначала выбранные поля в их порядке
+        for field in selected_fields:
+            ordered[field] = example.get(field, "")
+        # затем любые дополнительные поля, если появились
+        for key in example:
+            if key not in ordered:
+                ordered[key] = example[key]
+        ordered_examples.append(ordered)
+
+    # Переупорядочиваем search_requests
+    search_requests = result_json.get('search_requests', [])
+    sr_order = [
+        "query",
+        "url_search_query_page_2",
+        "count_of_page_on_pagination",
+        "total_count_of_results",
+        "links_items",
+    ]
+    ordered_search_requests = []
+    for req in search_requests:
+        ordered = OrderedDict()
+        for key in sr_order:
+            ordered[key] = req.get(key, "" if key != "links_items" else [])
+        # добавляем прочие ключи, если есть
+        for key in req:
+            if key not in ordered:
+                ordered[key] = req[key]
+        ordered_search_requests.append(ordered)
+
+    # Собираем итоговый OrderedDict в стабильном порядке
+    ordered_result = OrderedDict([
+        ("host", result_json.get("host", "")),
+        ("fields_str", result_json.get("fields_str", "")),
+        ("links", OrderedDict([
+            ("simple", ordered_examples)
+        ])),
+        ("search_requests", ordered_search_requests)
+    ])
+
+    return ordered_result
+
 @app.route('/')
 def index():
     """Главная страница - перенаправление на нулевой шаг"""
@@ -294,17 +351,20 @@ def step4():
     # Проверяем, есть ли уже сохраненный отредактированный JSON
     # (если пользователь вернулся с шага 5, показываем его отредактированный JSON)
     result_json = session.get('result_json')
+    selected_fields = session.get('selected_fields', [])
     
     if result_json is None:
         # Если сохраненного JSON нет, формируем новый из шагов 2 и 3
         # (пользователь пришел с шага 3)
         examples_data = session.get('examples_data', {})
         search_requests_data = session.get('search_requests_data', {})
-        selected_fields = session.get('selected_fields', [])
         result_json = process_results(examples_data, search_requests_data, selected_fields)
-        
-        # Сохраняем результат в сессию для последующего использования
-        session['result_json'] = result_json
+    else:
+        # Если JSON уже есть в сессии (возврат с шага 5), переупорядочим его
+        result_json = reorder_result_json(result_json, selected_fields)
+    
+    # Сохраняем результат в сессию для последующего использования
+    session['result_json'] = result_json
     
     # Сериализуем JSON в строку с сохранением порядка ключей (sort_keys=False по умолчанию)
     # и передаем строку в шаблон, чтобы избежать сортировки ключей фильтром tojson
