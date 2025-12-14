@@ -257,7 +257,12 @@
     const CODE_PAGED_SCROLL_LINES = 20;
     // Запас по высоте редактора (в строках), чтобы при добавлении новой строки
     // не было микродёрганий из-за пересчётов высоты/внутренней прокрутки.
-    const CODE_EDITOR_EXTRA_LINES = 1;
+    // ВАЖНО: этот запас нужен только ВО ВРЕМЯ "печати" (генерации). После завершения
+    // мы убираем его, чтобы в паузе (3 секунды перед переключением блоков) не было
+    // пустого пространства снизу.
+    const CODE_EDITOR_EXTRA_LINES_DURING_GEN = 1;
+    const CODE_EDITOR_EXTRA_LINES_AFTER_GEN = 0;
+    let codeEditorExtraLines = CODE_EDITOR_EXTRA_LINES_DURING_GEN;
 
     // Инициализация CodeMirror для отображения кода
     const codeTextarea = document.getElementById('code-gen-textarea');
@@ -307,8 +312,16 @@
         const linePx = (typeof codeEditor.defaultTextHeight === 'function')
             ? codeEditor.defaultTextHeight()
             : 18;
-        const extraPx = (Math.max(0, CODE_EDITOR_EXTRA_LINES) * linePx) + 20;
+        const safeExtraLines = Math.max(0, codeEditorExtraLines);
+        // "Подушка" внизу нужна только во время генерации, иначе видна как пустота.
+        const extraPaddingPx = codeTypewriterInProgress ? 20 : 0;
+        const extraPx = (safeExtraLines * linePx) + extraPaddingPx;
         codeEditor.setSize(null, contentHeight + extraPx);
+    }
+
+    function setCodeEditorExtraLines(lines) {
+        codeEditorExtraLines = Math.max(0, Number(lines) || 0);
+        scheduleAdjustCodeEditorHeight();
     }
 
     function scheduleAdjustCodeEditorHeight() {
@@ -528,6 +541,8 @@
         // Если анимация уже идёт — перезапускаем корректно
         stopCodeTypewriter();
         codeTypewriterInProgress = true;
+        // Во время печати держим небольшой запас, чтобы не было микродёрганий высоты.
+        setCodeEditorExtraLines(CODE_EDITOR_EXTRA_LINES_DURING_GEN);
 
         const tickMs = 16; // внутренняя частота обновления (примерно 60fps)
         const chunkSize = Math.max(1, Math.floor((CODE_TYPEWRITER_CHARS_PER_SEC * tickMs) / 1000));
@@ -561,6 +576,10 @@
 
             if (idx >= fullText.length) {
                 stopCodeTypewriter();
+                // Сразу после завершения генерации убираем запас по высоте,
+                // чтобы во время паузы (3 секунды до автопереключения блоков)
+                // не было пустого пространства снизу.
+                setCodeEditorExtraLines(CODE_EDITOR_EXTRA_LINES_AFTER_GEN);
                 // Финальная подгонка высоты
                 setTimeout(function() {
                     scheduleAdjustCodeEditorHeight();
