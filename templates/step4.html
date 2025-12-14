@@ -92,7 +92,8 @@
     
     // Валидация JSON при отправке формы
     form.addEventListener('submit', function(e) {
-        const jsonText = textarea.value.trim();
+        // Получаем актуальное значение из textarea напрямую
+        const jsonText = document.getElementById('json-textarea').value;
         
         // Скрываем предыдущую ошибку
         errorMessage.classList.remove('show');
@@ -102,13 +103,16 @@
             const parsedJson = JSON.parse(jsonText);
             
             // Если JSON валиден, выводим в консоль
-            console.log(parsedJson);
+            console.log('=== Отредактированный JSON из поля ===');
+            console.log('Строка:', jsonText);
+            console.log('Объект:', parsedJson);
             
             // Позволяем форме отправиться (не вызываем preventDefault)
         } catch (error) {
             // Если JSON невалиден, предотвращаем отправку и показываем ошибку
             e.preventDefault();
             errorMessage.classList.add('show');
+            console.error('Ошибка парсинга JSON:', error.message);
         }
     });
 </script>

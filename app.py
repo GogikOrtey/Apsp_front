@@ -268,21 +268,33 @@ def step4():
                 # Парсим и сохраняем отредактированный JSON в сессию
                 edited_json = json.loads(edited_json_str)
                 session['result_json'] = edited_json
+                
+                # Выводим отредактированный JSON в консоль сервера
+                print('\n=== Отредактированный JSON (шаг 4) ===')
+                print(json.dumps(edited_json, ensure_ascii=False, indent=2))
+                print('=' * 30 + '\n')
             except json.JSONDecodeError:
                 # Если JSON невалидный (хотя валидация должна была пройти на клиенте),
                 # все равно пробуем перейти, но используем данные из сессии
-                pass
+                print('\n=== ОШИБКА: JSON невалидный ===')
+                print('Используются данные из сессии\n')
         
         # Переходим на следующий шаг
         return redirect(url_for('step5'))
     
-    # Обрабатываем и валидируем данные из шагов 2 и 3
-    examples_data = session.get('examples_data', {})
-    search_requests_data = session.get('search_requests_data', {})
-    result_json = process_results(examples_data, search_requests_data)
+    # Проверяем, есть ли уже сохраненный отредактированный JSON
+    # (если пользователь вернулся с шага 5, показываем его отредактированный JSON)
+    result_json = session.get('result_json')
     
-    # Сохраняем результат в сессию для последующего использования
-    session['result_json'] = result_json
+    if result_json is None:
+        # Если сохраненного JSON нет, формируем новый из шагов 2 и 3
+        # (пользователь пришел с шага 3)
+        examples_data = session.get('examples_data', {})
+        search_requests_data = session.get('search_requests_data', {})
+        result_json = process_results(examples_data, search_requests_data)
+        
+        # Сохраняем результат в сессию для последующего использования
+        session['result_json'] = result_json
     
     return render_template('step4.html', result_json=result_json)
 
