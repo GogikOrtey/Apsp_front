@@ -81,6 +81,16 @@
         line-height: 1.5;
     }
 
+    /*
+      Тема material: "активная строка" выглядела контрастнее из-за фона
+      .CodeMirror-activeline-background{ background: rgba(0,0,0,.5) }.
+      Делаем такой же (по сути) фон для всего редактора, чтобы весь код выглядел одинаково.
+    */
+    .cm-s-material.CodeMirror,
+    .cm-s-material .CodeMirror-gutters {
+        background-color: #13191c;
+    }
+
     .CodeMirror-scroll {
         overflow: hidden !important;
         height: auto !important;
