@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Шаг 6 - Генерация кода{% endblock %}  
+{% block title %}Шаг 6 - Генерация кода{% endblock %}
 
 {% block content %}
 <h1>Генерация кода</h1>
@@ -20,12 +20,9 @@
             <span class="field-description">Введите код</span>
             <span class="field-name">code</span>
         </label>
-        <textarea 
-            class="field-textarea" 
-            name="code"
-            rows="1">{{ saved_data.get('code', '') }}</textarea>
+        <textarea class="field-textarea" name="code" rows="1">{{ saved_data.get('code', '') }}</textarea>
     </div>
-    
+
     <div class="btn-group">
         <a href="{{ url_for('step5') }}" class="btn btn-secondary">← Назад</a>
         <button type="submit" class="btn btn-primary">Далее →</button>
@@ -35,11 +32,15 @@
 
 {% block extra_css %}
 <style>
+    .container {
+        max-width: 800px !important;
+    }
+
     .field-input-group {
         margin-bottom: 15px;
         position: relative;
     }
-    
+
     .field-label {
         display: flex;
         justify-content: space-between;
@@ -48,18 +49,18 @@
         color: #555;
         font-weight: 500;
     }
-    
+
     .field-description {
         flex: 1;
     }
-    
+
     .field-name {
         margin-left: 15px;
         color: #888;
         font-family: 'Courier New', monospace;
         font-size: 0.9em;
     }
-    
+
     .field-textarea {
         width: 100%;
         padding: 10px 12px;
@@ -73,20 +74,20 @@
         overflow: hidden;
         transition: border-color 0.3s;
     }
-    
+
     .field-textarea:focus {
         outline: none;
         border-color: #667eea;
     }
-    
+
     h1 {
         margin-bottom: 8px;
     }
-    
+
     .step-indicator {
         margin-bottom: 20px;
     }
-    
+
     .btn-group {
         margin-top: 20px;
     }
@@ -102,21 +103,20 @@
         // Устанавливаем высоту равной scrollHeight (содержимое + padding)
         textarea.style.height = textarea.scrollHeight + 'px';
     }
-    
+
     // Инициализация при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Инициализируем автоизменение высоты для всех textarea
         const allTextareas = document.querySelectorAll('.field-textarea');
         allTextareas.forEach(textarea => {
             // Устанавливаем начальную высоту
             autoResizeTextarea(textarea);
-            
+
             // Обработчик изменения содержимого
-            textarea.addEventListener('input', function() {
+            textarea.addEventListener('input', function () {
                 autoResizeTextarea(this);
             });
         });
     });
 </script>
 {% endblock %}
-
