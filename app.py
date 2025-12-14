@@ -331,9 +331,29 @@ def step4():
     if 'selected_fields' not in session:
         session['selected_fields'] = []
     if 'examples_data' not in session:
-        session['examples_data'] = OrderedDict([("simple", [])])
+        session['examples_data'] = OrderedDict([
+            ("simple", [
+                OrderedDict([
+                    ("link", ""),
+                    ("name", ""),
+                    ("price", ""),
+                    ("InStock_trigger", ""),
+                    ("OutOfStock_trigger", ""),
+                ])
+            ])
+        ])
     if 'search_requests_data' not in session:
-        session['search_requests_data'] = OrderedDict([("search_requests", [])])
+        session['search_requests_data'] = OrderedDict([
+            ("search_requests", [
+                OrderedDict([
+                    ("query", ""),
+                    ("url_search_query_page_2", ""),
+                    ("count_of_page_on_pagination", ""),
+                    ("total_count_of_results", "0"),
+                    ("links_items", []),
+                ])
+            ])
+        ])
     
     # Загружаем описания полей для отображения
     fields = load_fields_descriptions()
