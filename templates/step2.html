@@ -109,6 +109,7 @@
     
     .field-input-group {
         margin-bottom: 15px;
+        position: relative;
     }
     
     .field-label {
@@ -135,6 +136,11 @@
     .field-textarea:focus {
         outline: none;
         border-color: #667eea;
+    }
+    
+    .field-textarea.error {
+        background-color: #ffe0e0;
+        border-color: #ff9999;
     }
     
     .btn-add {
@@ -171,6 +177,38 @@
     
     .btn-group {
         margin-top: 20px;
+    }
+    
+    .custom-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 5px;
+        padding: 6px 10px;
+        background: #333;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        z-index: 1000;
+    }
+    
+    .custom-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #333;
+    }
+    
+    .custom-tooltip.show {
+        opacity: 1;
     }
 </style>
 {% endblock %}
@@ -259,9 +297,103 @@
         textarea.style.height = textarea.scrollHeight + 'px';
     }
     
+    // Обязательные поля
+    const requiredFields = ['name', 'link', 'price'];
+    
+    // Функция для удаления класса ошибки и tooltip при вводе
+    function removeErrorClass(textarea) {
+        textarea.classList.remove('error');
+        // Удаляем tooltip, если он есть
+        const fieldGroup = textarea.closest('.field-input-group');
+        if (fieldGroup) {
+            const tooltip = fieldGroup.querySelector('.custom-tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        }
+    }
+    
+    // Функция для создания и показа tooltip над полем
+    function showTooltip(textarea, message) {
+        const fieldGroup = textarea.closest('.field-input-group');
+        if (!fieldGroup) return;
+        
+        // Удаляем существующий tooltip, если есть
+        const existingTooltip = fieldGroup.querySelector('.custom-tooltip');
+        if (existingTooltip) {
+            existingTooltip.remove();
+        }
+        
+        // Создаем новый tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'custom-tooltip';
+        tooltip.textContent = message;
+        fieldGroup.appendChild(tooltip);
+        
+        // Показываем tooltip с небольшой задержкой для плавности
+        setTimeout(() => {
+            tooltip.classList.add('show');
+        }, 10);
+    }
+    
+    // Функция валидации формы
+    function validateForm() {
+        const form = document.getElementById('examplesForm');
+        const exampleBlocks = document.querySelectorAll('.example-block');
+        let isValid = true;
+        
+        // Убираем все предыдущие ошибки и tooltip
+        document.querySelectorAll('.field-textarea.error').forEach(textarea => {
+            textarea.classList.remove('error');
+        });
+        document.querySelectorAll('.custom-tooltip').forEach(tooltip => {
+            tooltip.remove();
+        });
+        
+        // Проверяем каждый блок примера
+        exampleBlocks.forEach(block => {
+            const exampleIndex = block.getAttribute('data-example-index');
+            
+            // Проверяем каждое обязательное поле
+            requiredFields.forEach(fieldKey => {
+                // Проверяем, есть ли это поле в выбранных полях
+                if (selectedFields.includes(fieldKey)) {
+                    const fieldName = `example_${exampleIndex}_${fieldKey}`;
+                    const textarea = form.querySelector(`textarea[name="${fieldName}"]`);
+                    
+                    if (textarea) {
+                        const value = textarea.value.trim();
+                        if (value === '') {
+                            isValid = false;
+                            textarea.classList.add('error');
+                            const fieldDescription = fieldsDescriptions[fieldKey] || fieldKey;
+                            // Показываем tooltip над полем
+                            showTooltip(textarea, `Поле "${fieldDescription}" обязательно для заполнения`);
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Прокручиваем к первому полю с ошибкой, если есть
+        if (!isValid) {
+            const firstError = form.querySelector('.field-textarea.error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Фокусируемся на поле после небольшой задержки
+                setTimeout(() => {
+                    firstError.focus();
+                }, 300);
+            }
+        }
+        
+        return isValid;
+    }
+    
     // Инициализация при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('examples-container');
+        const form = document.getElementById('examplesForm');
         
         // Создаем первый блок примера
         const firstBlock = createExampleBlock(1, true);
@@ -276,6 +408,7 @@
             // Обработчик изменения содержимого
             textarea.addEventListener('input', function() {
                 autoResizeTextarea(this);
+                removeErrorClass(this);
             });
         });
         
@@ -291,8 +424,17 @@
                 autoResizeTextarea(textarea);
                 textarea.addEventListener('input', function() {
                     autoResizeTextarea(this);
+                    removeErrorClass(this);
                 });
             });
+        });
+        
+        // Обработчик отправки формы
+        form.addEventListener('submit', function(e) {
+            if (!validateForm()) {
+                e.preventDefault();
+                return false;
+            }
         });
     });
 </script>
