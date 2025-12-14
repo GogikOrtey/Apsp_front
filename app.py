@@ -49,6 +49,20 @@ def save_to_json(data):
         json.dump(submissions, f, ensure_ascii=False, indent=2, sort_keys=False)
 
 
+def sanitize_text(value):
+    """
+    Небольшая обработка текстовых полей перед сохранением:
+    1) Убрать пробелы/табы/переносы строк с концов
+    2) Экранировать двойные кавычки: " -> \"
+    """
+    if value is None:
+        return ''
+    if not isinstance(value, str):
+        return value
+    value = value.strip()
+    return value.replace('"', r'\"')
+
+
 def reorder_result_json(result_json, selected_fields):
     """
     Приводит сохраненный result_json к стабильному порядку ключей,
@@ -221,7 +235,7 @@ def step2():
             example_dict = OrderedDict()
             for field_key in selected_fields:
                 field_name = f'example_{example_num}_{field_key}'
-                field_value = request.form.get(field_name, '')
+                field_value = sanitize_text(request.form.get(field_name, ''))
                 # Добавляем все поля, даже с пустыми значениями
                 example_dict[field_key] = field_value
             
@@ -263,16 +277,16 @@ def step3():
     
     if request.method == 'POST':
         # Собираем данные из формы
-        query = request.form.get('query', '')
-        url_search_query_page_2 = request.form.get('url_search_query_page_2', '')
-        count_of_page_on_pagination = request.form.get('count_of_page_on_pagination', '')
-        total_count_of_results = request.form.get('total_count_of_results', '')
+        query = sanitize_text(request.form.get('query', ''))
+        url_search_query_page_2 = sanitize_text(request.form.get('url_search_query_page_2', ''))
+        count_of_page_on_pagination = sanitize_text(request.form.get('count_of_page_on_pagination', ''))
+        total_count_of_results = sanitize_text(request.form.get('total_count_of_results', ''))
         
         # Собираем все поля links_items (links_items_0, links_items_1, и т.д.)
         links_items = []
         for key in sorted(request.form.keys()):
             if key.startswith('links_items_'):
-                value = request.form.get(key, '').strip()
+                value = sanitize_text(request.form.get(key, ''))
                 # Добавляем только непустые значения
                 if value:
                     links_items.append(value)
