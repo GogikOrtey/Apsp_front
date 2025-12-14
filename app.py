@@ -383,17 +383,14 @@ def step5():
     fields = load_fields_descriptions()
     
     if request.method == 'POST':
-        # Получаем код из формы
-        code = request.form.get('code', '')
-        
-        # Сохраняем код в сессию
-        session['code'] = code
+        # Выводим сообщение в консоль сервера
+        print("Начинаем генерацию")
         
         # Переходим на следующий шаг
         return redirect(url_for('step6'))
     
-    # Отображаем форму с сохраненными данными
-    saved_data = {'code': session.get('code', '')}
+    # Отображаем форму
+    saved_data = {}
     
     return render_template('step5.html', saved_data=saved_data)
 

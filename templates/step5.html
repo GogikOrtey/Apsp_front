@@ -3,7 +3,7 @@
 {% block title %}Шаг 5 - Генерация кода{% endblock %} 
 
 {% block content %}
-<h1>Генерация кода</h1>
+<h1>Всё готово для старта, можем начинать</h1>
 
 <div class="step-indicator">
     <div class="step completed">1</div>
@@ -15,70 +15,15 @@
 </div>
 
 <form method="POST" id="codeGenerationForm">
-    <div class="field-input-group">
-        <label class="field-label">
-            <span class="field-description">Введите код</span>
-            <span class="field-name">code</span>
-        </label>
-        <textarea 
-            class="field-textarea" 
-            name="code"
-            rows="1">{{ saved_data.get('code', '') }}</textarea>
-    </div>
-    
     <div class="btn-group">
+        <button type="submit" class="btn btn-success btn-large">Начать генерацию</button>
         <a href="{{ url_for('step4') }}" class="btn btn-secondary">← Назад</a>
-        <button type="submit" class="btn btn-primary">Далее →</button>
     </div>
 </form>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .field-input-group {
-        margin-bottom: 15px;
-        position: relative;
-    }
-    
-    .field-label {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 6px;
-        color: #555;
-        font-weight: 500;
-    }
-    
-    .field-description {
-        flex: 1;
-    }
-    
-    .field-name {
-        margin-left: 15px;
-        color: #888;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9em;
-    }
-    
-    .field-textarea {
-        width: 100%;
-        padding: 10px 12px;
-        border: 2px solid #e0e0e0;
-        border-radius: 5px;
-        font-size: 16px;
-        font-family: inherit;
-        resize: none;
-        min-height: 1.5em;
-        line-height: 1.5;
-        overflow: hidden;
-        transition: border-color 0.3s;
-    }
-    
-    .field-textarea:focus {
-        outline: none;
-        border-color: #667eea;
-    }
-    
     h1 {
         margin-bottom: 8px;
     }
@@ -87,36 +32,40 @@
         margin-bottom: 20px;
     }
     
+    #codeGenerationForm {
+        margin-top: 300px;
+    }
+    
     .btn-group {
-        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .btn-success.btn-large {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        width: 100%;
+    }
+    
+    .btn-success.btn-large:hover {
+        background-color: #218838;
+    }
+    
+    .btn-success.btn-large:active {
+        background-color: #1e7e34;
     }
 </style>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    // Функция автоматического изменения высоты textarea
-    function autoResizeTextarea(textarea) {
-        // Сбрасываем высоту, чтобы получить правильную scrollHeight
-        textarea.style.height = 'auto';
-        // Устанавливаем высоту равной scrollHeight (содержимое + padding)
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }
-    
-    // Инициализация при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
-        // Инициализируем автоизменение высоты для всех textarea
-        const allTextareas = document.querySelectorAll('.field-textarea');
-        allTextareas.forEach(textarea => {
-            // Устанавливаем начальную высоту
-            autoResizeTextarea(textarea);
-            
-            // Обработчик изменения содержимого
-            textarea.addEventListener('input', function() {
-                autoResizeTextarea(this);
-            });
-        });
-    });
-</script>
 {% endblock %}
 
