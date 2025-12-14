@@ -10,23 +10,20 @@
     <div class="step completed">2</div>
     <div class="step completed">3</div>
     <div class="step active">4</div>
+    <div class="step">5</div>
 </div>
 
+<form method="POST">
 <div style="margin-bottom: 30px;">
     <h2 style="color: #667eea; margin-bottom: 20px;">Результирующий JSON</h2>
     
     <div class="summary-item">
-        <pre style="margin-top: 10px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">{{ result_json | tojson(indent=2) }}</pre>
+        <textarea name="edited_json" style="margin-top: 10px; padding: 15px; background: #000; color: #fff; border: 1px solid #444; border-radius: 5px; width: 100%; min-height: 400px; font-family: 'Courier New', monospace; font-size: 14px; white-space: pre; overflow-x: auto; resize: vertical;">{{ result_json | tojson(indent=2) }}</textarea>
     </div>
 </div>
-
-<form method="POST">
     <div class="btn-group">
         <a href="{{ url_for('step3') }}" class="btn btn-secondary">← Назад</a>
-        <div>
-            <input type="hidden" name="confirm" value="yes">
-            <button type="submit" class="btn btn-success">Подтвердить и отправить ✓</button>
-        </div>
+        <button type="submit" class="btn btn-primary">Далее →</button>
     </div>
 </form>
 {% endblock %}

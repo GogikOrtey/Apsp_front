@@ -260,29 +260,8 @@ def step4():
     fields = load_fields_descriptions()
     
     if request.method == 'POST':
-        if request.form.get('confirm') == 'yes':
-            # Собираем все данные из сессии
-            selected_fields = session.get('selected_fields', [])
-            # Создаем словарь с выбранными полями и их описаниями
-            selected_fields_data = {}
-            for field_key in selected_fields:
-                if field_key in fields:
-                    selected_fields_data[field_key] = fields[field_key]
-            
-            form_data = {
-                'selected_fields': selected_fields_data,
-                'examples_data': session.get('examples_data', {}),
-                'search_requests_data': session.get('search_requests_data', {})
-            }
-            
-            # Сохраняем данные в JSON
-            save_to_json(form_data)
-            
-            session['submitted'] = True
-            return redirect(url_for('success'))
-        else:
-            # Возвращаемся на предыдущий шаг
-            return redirect(url_for('step3'))
+        # Переходим на следующий шаг
+        return redirect(url_for('step5'))
     
     # Обрабатываем и валидируем данные из шагов 2 и 3
     examples_data = session.get('examples_data', {})
@@ -293,6 +272,51 @@ def step4():
     session['result_json'] = result_json
     
     return render_template('step4.html', result_json=result_json)
+
+@app.route('/step5', methods=['GET', 'POST'])
+def step5():
+    """Шаг 5: Генерация кода"""
+    # Проверяем, что пользователь прошел все предыдущие шаги
+    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session:
+        return redirect(url_for('step1'))
+    
+    # Загружаем описания полей для отображения
+    fields = load_fields_descriptions()
+    
+    if request.method == 'POST':
+        # Получаем код из формы
+        code = request.form.get('code', '')
+        
+        # Сохраняем код в сессию
+        session['code'] = code
+        
+        # Проверяем, был ли отредактирован JSON на шаге 4
+        result_json = session.get('result_json', {})
+        
+        # Формируем итоговые данные для сохранения
+        selected_fields = session.get('selected_fields', [])
+        selected_fields_data = {}
+        for field_key in selected_fields:
+            if field_key in fields:
+                selected_fields_data[field_key] = fields[field_key]
+        
+        form_data = {
+            'selected_fields': selected_fields_data,
+            'examples_data': session.get('examples_data', {}),
+            'search_requests_data': session.get('search_requests_data', {}),
+            'code': code
+        }
+        
+        # Сохраняем данные в JSON
+        save_to_json(form_data)
+        
+        session['submitted'] = True
+        return redirect(url_for('success'))
+    
+    # Отображаем форму с сохраненными данными
+    saved_data = {'code': session.get('code', '')}
+    
+    return render_template('step5.html', saved_data=saved_data)
 
 
 @app.route('/success')
