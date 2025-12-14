@@ -28,7 +28,7 @@ def process_results(examples_data, search_requests_data):
     
     # Выводим результат в консоль
     print('\n' + '=' * 30)
-    print('=== ОБРАБОТКА РЕЗУЛЬТАТОВ (data_input_table) ===')
+    print('ОБРАБОТКА РЕЗУЛЬТАТОВ (data_input_table)')
     print('=' * 30)
     print('\n📋 Итоговый JSON (data_input_table):')
     print(json.dumps(data_input_table, ensure_ascii=False, indent=2))
