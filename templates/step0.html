@@ -5,10 +5,9 @@
 {% block extra_css %}
 <style>
     .welcome-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        justify-items: center;
+        align-content: center;
         min-height: 60vh;
         text-align: center;
         padding: 40px 20px;
@@ -49,6 +48,31 @@
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
     }
+
+    .welcome-actions {
+        display: grid;
+        gap: 14px;
+        /* width: min(520px, 100%); */
+        width: min(350px, 100%);
+        justify-items: stretch;
+    }
+
+    .welcome-actions .start-button {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .secondary-button {
+        background: #eef2ff;
+        color: #4451b8;
+        border: 1px solid rgba(102, 126, 234, 0.35);
+    }
+
+    .secondary-button:hover {
+        background: #e0e7ff;
+        color: #3d48a6;
+    }
 </style>
 {% endblock %}
 
@@ -59,7 +83,10 @@
         <p>Мы рады приветствовать вас в автоматическом инструменте по созданию парсеров - АПСП</p>
         <!-- TODO Добавить hint при наведении на слово АПСП, что бы там было "Агент По Созданию Парсеров" -->
     </div>
-    <a href="{{ url_for('step1') }}" class="start-button">Начать заполнение полей</a>
+    <div class="welcome-actions">
+        <a href="{{ url_for('step1') }}" class="start-button">Начать заполнение полей</a>
+        <a href="{{ url_for('step4') }}" class="start-button secondary-button">Перейти к заполнению JSON</a>
+    </div>
 </div>
 {% endblock %}
 
