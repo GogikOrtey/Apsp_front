@@ -33,14 +33,14 @@
     }
     
     #codeGenerationForm {
-        margin-top: 300px;
+        margin-top: 200px;
     }
     
     .btn-group {
         display: flex;
         flex-direction: column;
         gap: 10px;
-        align-items: stretch;
+        align-items: flex-start;
     }
     
     .btn-success.btn-large {
@@ -52,16 +52,25 @@
         font-weight: 600;
         border-radius: 5px;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: background-color 0.3s, transform 0.1s;
         width: 100%;
     }
     
+    .btn-group .btn-secondary {
+        width: auto;
+    }
+    
     .btn-success.btn-large:hover {
-        background-color: #218838;
+        /* background-color: #218838; */
+        background-color: #1bc540;
+        border-radius: 10px;
     }
     
     .btn-success.btn-large:active {
-        background-color: #1e7e34;
+        /* background-color: #1e7e34; */
+        background-color: #1bc540;
+        transform: scale(0.986);
+        border-radius: 10px;
     }
 </style>
 {% endblock %}
