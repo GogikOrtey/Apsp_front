@@ -248,6 +248,12 @@
     // const CODE_TYPEWRITER_CHARS_PER_SEC = 450;
     const CODE_TYPEWRITER_CHARS_PER_SEC = 370;
 
+    // Режим автопрокрутки страницы во время "генерации" кода:
+    // - 'follow' : текущий режим — держим низ блока в видимой области (может скроллить часто)
+    // - 'paged'  : новый режим — скроллим вниз "порциями" по N строк только когда блок снова дошёл до низа экрана
+    const CODE_AUTO_SCROLL_MODE = 'follow'; // 'follow' | 'paged'
+    const CODE_PAGED_SCROLL_LINES = 10;
+
     // Инициализация CodeMirror для отображения кода
     const codeTextarea = document.getElementById('code-gen-textarea');
     let codeEditor = null;
@@ -255,6 +261,7 @@
     let codeTypewriterInProgress = false;
     let lastPageScrollAt = 0;
     let adjustScheduled = false;
+    let pagedAutoScrollArmed = true;
     
     if (codeTextarea) {
         codeEditor = CodeMirror.fromTextArea(codeTextarea, {
@@ -415,18 +422,43 @@
         const bottom = rect.bottom;
         const viewportH = window.innerHeight || document.documentElement.clientHeight;
         const margin = 24;
+        const threshold = viewportH - margin;
 
-        // Если нижняя граница редактора ушла ниже экрана — доскролливаем страницу вниз,
-        // чтобы низ блока снова оказался в видимой области.
-        if (bottom > viewportH - margin) {
+        // Режим 1: "follow" — подгоняем страницу так, чтобы низ блока всегда был видим.
+        if (CODE_AUTO_SCROLL_MODE === 'follow') {
+            if (bottom > threshold) {
+                const now = Date.now();
+                // лёгкая "защита" от слишком частых скроллов
+                if (now - lastPageScrollAt < 50) return;
+                lastPageScrollAt = now;
+
+                const delta = bottom - threshold;
+                window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+            }
+            return;
+        }
+
+        // Режим 2: "paged" — скроллим "порциями" по N строк, только когда блок ДОШЁЛ до низа экрана,
+        // и повторяем только когда он снова туда дойдёт.
+        if (bottom > threshold) {
+            if (!pagedAutoScrollArmed) return;
+
             const now = Date.now();
-            // лёгкая "защита" от слишком частых скроллов
-            if (now - lastPageScrollAt < 50) return;
+            if (now - lastPageScrollAt < 80) return;
             lastPageScrollAt = now;
 
-            const delta = bottom - (viewportH - margin);
-            window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+            const linePx = (typeof codeEditor.defaultTextHeight === 'function')
+                ? codeEditor.defaultTextHeight()
+                : 18;
+            const pagePx = Math.max(1, CODE_PAGED_SCROLL_LINES) * linePx;
+
+            pagedAutoScrollArmed = false;
+            window.scrollBy({ top: pagePx, left: 0, behavior: 'auto' });
+            return;
         }
+
+        // Низ блока снова выше порога — "взводим" триггер для следующей порции
+        pagedAutoScrollArmed = true;
     }
 
     function startCodeTypewriter(fullText, onComplete) {
