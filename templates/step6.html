@@ -250,9 +250,11 @@
 
     // Режим автопрокрутки страницы во время "генерации" кода:
     // - 'follow' : текущий режим — держим низ блока в видимой области (может скроллить часто)
+    // - 'follow_smooth' : как follow, но плавно (без видимых "прыжков" текста)
     // - 'paged'  : новый режим — скроллим вниз "порциями" по N строк только когда блок снова дошёл до низа экрана
-    const CODE_AUTO_SCROLL_MODE = 'follow'; // 'follow' | 'paged'
-    const CODE_PAGED_SCROLL_LINES = 10;
+    // const CODE_AUTO_SCROLL_MODE = 'follow_smooth'; // 'follow' | 'follow_smooth' | 'paged'
+    const CODE_AUTO_SCROLL_MODE = 'paged'; // 'follow' | 'follow_smooth' | 'paged'
+    const CODE_PAGED_SCROLL_LINES = 20;
     // Запас по высоте редактора (в строках), чтобы при добавлении новой строки
     // не было микродёрганий из-за пересчётов высоты/внутренней прокрутки.
     const CODE_EDITOR_EXTRA_LINES = 1;
@@ -265,6 +267,8 @@
     let lastPageScrollAt = 0;
     let adjustScheduled = false;
     let pagedAutoScrollArmed = true;
+    let smoothPageScrollRaf = null;
+    let smoothPageScrollTargetY = null;
     
     if (codeTextarea) {
         codeEditor = CodeMirror.fromTextArea(codeTextarea, {
@@ -450,6 +454,19 @@
             return;
         }
 
+        // Режим 1b: "follow_smooth" — как follow, но плавно (без скачков на строку).
+        if (CODE_AUTO_SCROLL_MODE === 'follow_smooth') {
+            if (bottom > threshold) {
+                const now = Date.now();
+                if (now - lastPageScrollAt < 50) return;
+                lastPageScrollAt = now;
+
+                const delta = bottom - threshold;
+                requestSmoothPageScrollBy(delta);
+            }
+            return;
+        }
+
         // Режим 2: "paged" — скроллим "порциями" по N строк, только когда блок ДОШЁЛ до низа экрана,
         // и повторяем только когда он снова туда дойдёт.
         if (bottom > threshold) {
@@ -471,6 +488,38 @@
 
         // Низ блока снова выше порога — "взводим" триггер для следующей порции
         pagedAutoScrollArmed = true;
+    }
+
+    function requestSmoothPageScrollBy(deltaY) {
+        const docEl = document.documentElement;
+        const maxY = Math.max(0, (docEl ? docEl.scrollHeight : 0) - (window.innerHeight || 0));
+
+        // Накапливаем цель, чтобы частые вызовы не создавали "лес" анимаций
+        const currentY = window.scrollY || window.pageYOffset || 0;
+        const base = (smoothPageScrollTargetY == null) ? currentY : smoothPageScrollTargetY;
+        smoothPageScrollTargetY = Math.min(maxY, Math.max(0, base + deltaY));
+
+        if (smoothPageScrollRaf != null) return;
+
+        const step = function() {
+            const y = window.scrollY || window.pageYOffset || 0;
+            const target = (smoothPageScrollTargetY == null) ? y : smoothPageScrollTargetY;
+            const diff = target - y;
+
+            // Уже дошли — стопаемся
+            if (Math.abs(diff) < 0.75) {
+                window.scrollTo(0, target);
+                smoothPageScrollRaf = null;
+                return;
+            }
+
+            // Плавное приближение к цели
+            const delta = Math.sign(diff) * Math.min(Math.abs(diff), Math.max(2, Math.abs(diff) * 0.2));
+            window.scrollTo(0, y + delta);
+            smoothPageScrollRaf = requestAnimationFrame(step);
+        };
+
+        smoothPageScrollRaf = requestAnimationFrame(step);
     }
 
     function startCodeTypewriter(fullText, onComplete) {
