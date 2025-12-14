@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, Response
 import json
 import os
 from datetime import datetime
@@ -476,6 +476,11 @@ def reset():
 def content(filename):
     """Обслуживание статических файлов из папки content"""
     return send_from_directory('content', filename)
+
+@app.route('/.well-known/appspecific/com.chrome.devtools.json')
+def chrome_devtools():
+    """Обработчик для Chrome DevTools - убирает 404 предупреждения"""
+    return Response('{}', mimetype='application/json')
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
