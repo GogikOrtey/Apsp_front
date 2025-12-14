@@ -3,8 +3,6 @@
 {% block title %}Шаг 5 - Генерация кода{% endblock %}
 
 {% block content %}
-<h1>Всё готово для старта, можем начинать</h1>
-
 <div class="step-indicator">
     <div class="step completed">1</div>
     <div class="step completed">2</div>
@@ -14,10 +12,11 @@
     <div class="step">6</div>
 </div>
 
+<h1>Всё готово для старта, можем начинать</h1>
+
 <form method="POST" id="codeGenerationForm">
     <div class="btn-group">
         <button type="submit" class="btn btn-success btn-large">Начать генерацию</button>
-        <a href="{{ url_for('step4') }}" class="btn btn-secondary">← Назад</a>
     </div>
 </form>
 {% endblock %}
@@ -25,15 +24,19 @@
 {% block extra_css %}
 <style>
     h1 {
+        margin-top: 12px;
         margin-bottom: 8px;
+        font-size: 1.8em;
+        color: #667eea;
+        text-align: center;
     }
 
     .step-indicator {
-        margin-bottom: 20px;
+        margin-bottom: 10px;
     }
 
     #codeGenerationForm {
-        margin-top: 200px;
+        margin-top: 20px;
     }
 
     .btn-group {
