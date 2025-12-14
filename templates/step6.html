@@ -213,6 +213,14 @@
         tab-size: 4;
     }
 
+    /* Status должен быть "высотой 4 строки" и выше при необходимости */
+    #status-textarea {
+        height: auto;
+        min-height: calc(4 * 1.5em + 28px); /* 4 строки + padding/border (примерно) */
+        overflow-y: hidden;
+        resize: none;
+    }
+
     .accordion-textarea:focus {
         outline: none;
         border-color: #667eea;
@@ -246,6 +254,9 @@
     // const CODE_TYPEWRITER_CHARS_PER_SEC = 320;
     // const CODE_TYPEWRITER_CHARS_PER_SEC = 450;
     const CODE_TYPEWRITER_CHARS_PER_SEC = 370;
+
+    // Скорость "печати" статуса (символов в секунду)
+    const STATUS_TYPEWRITER_CHARS_PER_SEC = 90;
 
     // Режим автопрокрутки страницы во время "генерации" кода:
     // - 'follow' : текущий режим — держим низ блока в видимой области (может скроллить часто)
@@ -410,10 +421,75 @@
     // Истинное завершение: когда весь код уже отобразился в Code gen (typewriter закончился)
     let code_display_complete = false;
     let status_message_loaded = false;
+    let statusTypewriterTimer = null;
+    let statusTypewriterInProgress = false;
+
+    function stopStatusTypewriter() {
+        if (statusTypewriterTimer) {
+            clearInterval(statusTypewriterTimer);
+            statusTypewriterTimer = null;
+        }
+        statusTypewriterInProgress = false;
+    }
+
+    function adjustStatusTextareaHeight() {
+        const el = document.getElementById('status-textarea');
+        if (!el) return;
+
+        // Сброс, чтобы корректно померить scrollHeight
+        el.style.height = 'auto';
+
+        const cs = window.getComputedStyle(el);
+        const fontSize = parseFloat(cs.fontSize) || 14;
+        const lineHeight = (cs.lineHeight && cs.lineHeight !== 'normal')
+            ? parseFloat(cs.lineHeight)
+            : Math.round(fontSize * 1.5);
+
+        const padTop = parseFloat(cs.paddingTop) || 0;
+        const padBottom = parseFloat(cs.paddingBottom) || 0;
+        const borderTop = parseFloat(cs.borderTopWidth) || 0;
+        const borderBottom = parseFloat(cs.borderBottomWidth) || 0;
+
+        const minRows = 4;
+        const minHeightPx = (minRows * lineHeight) + padTop + padBottom + borderTop + borderBottom;
+        const nextHeight = Math.max(minHeightPx, el.scrollHeight);
+        el.style.height = nextHeight + 'px';
+    }
+
+    function startStatusTypewriter(fullText) {
+        const el = document.getElementById('status-textarea');
+        if (!el) return;
+
+        stopStatusTypewriter();
+        statusTypewriterInProgress = true;
+
+        // Начинаем печатать "с нуля"
+        el.value = '';
+        adjustStatusTextareaHeight();
+
+        const tickMs = 16;
+        const chunkSize = Math.max(1, Math.floor((STATUS_TYPEWRITER_CHARS_PER_SEC * tickMs) / 1000));
+        let idx = 0;
+
+        statusTypewriterTimer = setInterval(function() {
+            if (!statusTypewriterInProgress) return;
+
+            const nextIdx = Math.min(fullText.length, idx + chunkSize);
+            el.value = fullText.slice(0, nextIdx);
+            idx = nextIdx;
+
+            adjustStatusTextareaHeight();
+
+            if (idx >= fullText.length) {
+                stopStatusTypewriter();
+                status_message_loaded = true;
+            }
+        }, tickMs);
+    }
 
     function maybeLoadGlobalStatusMessage() {
         if (!code_display_complete) return;
-        if (status_message_loaded) return;
+        if (status_message_loaded || statusTypewriterInProgress) return;
 
         const statusTextarea = document.getElementById('status-textarea');
         if (!statusTextarea) return;
@@ -426,8 +502,7 @@
                 return response.text();
             })
             .then(text => {
-                statusTextarea.value = text;
-                status_message_loaded = true;
+                startStatusTypewriter(text);
             })
             .catch(error => {
                 console.error('Ошибка при обновлении итогового статуса:', error);
