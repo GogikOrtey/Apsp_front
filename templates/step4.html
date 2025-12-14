@@ -13,32 +13,11 @@
 </div>
 
 <div style="margin-bottom: 30px;">
-    <h2 style="color: #667eea; margin-bottom: 20px;">Проверьте введенные данные:</h2>
+    <h2 style="color: #667eea; margin-bottom: 20px;">Результирующий JSON</h2>
     
-    {% if data.selected_fields %}
     <div class="summary-item">
-        <strong>Выбранные поля:</strong>
-        <ul style="margin-top: 10px; margin-left: 20px;">
-            {% for field_key, field_description in data.selected_fields.items() %}
-            <li><strong>{{ field_key }}:</strong> {{ field_description }}</li>
-            {% endfor %}
-        </ul>
+        <pre style="margin-top: 10px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">{{ result_json | tojson(indent=2) }}</pre>
     </div>
-    {% endif %}
-    
-    {% if data.examples_data and data.examples_data.simple %}
-    <div class="summary-item">
-        <strong>Примеры данных:</strong>
-        <pre style="margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 5px; overflow-x: auto;">{{ data.examples_data | tojson(indent=2) }}</pre>
-    </div>
-    {% endif %}
-    
-    {% if data.search_requests_data and data.search_requests_data.search_requests %}
-    <div class="summary-item">
-        <strong>Поисковые запросы:</strong>
-        <pre style="margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 5px; overflow-x: auto;">{{ data.search_requests_data | tojson(indent=2) }}</pre>
-    </div>
-    {% endif %}
 </div>
 
 <form method="POST">

@@ -284,20 +284,15 @@ def step4():
             # Возвращаемся на предыдущий шаг
             return redirect(url_for('step3'))
     
-    # Собираем все данные для отображения
-    selected_fields = session.get('selected_fields', [])
-    selected_fields_data = {}
-    for field_key in selected_fields:
-        if field_key in fields:
-            selected_fields_data[field_key] = fields[field_key]
+    # Обрабатываем и валидируем данные из шагов 2 и 3
+    examples_data = session.get('examples_data', {})
+    search_requests_data = session.get('search_requests_data', {})
+    result_json = process_results(examples_data, search_requests_data)
     
-    form_data = {
-        'selected_fields': selected_fields_data,
-        'examples_data': session.get('examples_data', {}),
-        'search_requests_data': session.get('search_requests_data', {})
-    }
+    # Сохраняем результат в сессию для последующего использования
+    session['result_json'] = result_json
     
-    return render_template('step4.html', data=form_data)
+    return render_template('step4.html', result_json=result_json)
 
 
 @app.route('/success')
