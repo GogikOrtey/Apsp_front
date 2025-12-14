@@ -57,7 +57,7 @@
     <h2 style="color: #667eea; margin-bottom: 20px;">Результирующий JSON</h2>
     
     <div class="summary-item">
-        <textarea id="json-textarea" name="edited_json">{{ result_json | tojson(indent=2) }}</textarea>
+        <textarea id="json-textarea" name="edited_json">{{ result_json_str }}</textarea>
         <div id="error-message" class="error-message">JSON невалидный</div>
     </div>
 </div>

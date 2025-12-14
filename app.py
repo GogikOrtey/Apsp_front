@@ -236,6 +236,10 @@ def step3():
         examples_data = session.get('examples_data', {})
         process_results(examples_data, result_json)
         
+        # Удаляем редактированный JSON из сессии, чтобы он был собран заново из данных шагов 2 и 3
+        if 'result_json' in session:
+            del session['result_json']
+        
         # Переходим на следующий шаг (step4 - бывший summary)
         return redirect(url_for('step4'))
     
@@ -296,7 +300,11 @@ def step4():
         # Сохраняем результат в сессию для последующего использования
         session['result_json'] = result_json
     
-    return render_template('step4.html', result_json=result_json)
+    # Сериализуем JSON в строку с сохранением порядка ключей (sort_keys=False по умолчанию)
+    # и передаем строку в шаблон, чтобы избежать сортировки ключей фильтром tojson
+    result_json_str = json.dumps(result_json, ensure_ascii=False, indent=2, sort_keys=False)
+    
+    return render_template('step4.html', result_json_str=result_json_str)
 
 @app.route('/step5', methods=['GET', 'POST'])
 def step5():
