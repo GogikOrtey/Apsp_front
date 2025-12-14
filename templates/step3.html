@@ -14,7 +14,10 @@
 
 <form method="POST" id="parsePageForm">
     <div class="field-input-group">
-        <label class="field-label">query | Поисковый запрос</label>
+        <label class="field-label">
+            <span class="field-description">Поисковый запрос</span>
+            <span class="field-name">query</span>
+        </label>
         <textarea 
             class="field-textarea" 
             name="query"
@@ -22,7 +25,10 @@
     </div>
     
     <div class="field-input-group">
-        <label class="field-label">url_search_query_page_2 | Ссылка на 2ю страницу поиска</label>
+        <label class="field-label">
+            <span class="field-description">Ссылка на 2ю страницу поиска</span>
+            <span class="field-name">url_search_query_page_2</span>
+        </label>
         <textarea 
             class="field-textarea" 
             name="url_search_query_page_2"
@@ -30,7 +36,10 @@
     </div>
     
     <div class="field-input-group">
-        <label class="field-label">count_of_page_on_pagination | Кол-во страниц в пагинации</label>
+        <label class="field-label">
+            <span class="field-description">Кол-во страниц в пагинации</span>
+            <span class="field-name">count_of_page_on_pagination</span>
+        </label>
         <textarea 
             class="field-textarea" 
             name="count_of_page_on_pagination"
@@ -38,7 +47,10 @@
     </div>
     
     <div class="field-input-group">
-        <label class="field-label">total_count_of_results | (Опц.) Кол-во найденных результатов</label>
+        <label class="field-label">
+            <span class="field-description">(Опц.) Кол-во найденных результатов</span>
+            <span class="field-name">total_count_of_results</span>
+        </label>
         <textarea 
             class="field-textarea" 
             name="total_count_of_results"
@@ -46,7 +58,10 @@
     </div>
     
     <div class="field-input-group">
-        <label class="field-label">links_items | Ссылки на товары на странице поиска</label>
+        <label class="field-label">
+            <span class="field-description">Ссылки на товары на странице поиска</span>
+            <span class="field-name">links_items</span>
+        </label>
         <textarea 
             class="field-textarea" 
             name="links_items"
@@ -73,10 +88,23 @@
     }
     
     .field-label {
-        display: block;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 6px;
         color: #555;
         font-weight: 500;
+    }
+    
+    .field-description {
+        flex: 1;
+    }
+    
+    .field-name {
+        margin-left: 15px;
+        color: #888;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
     }
     
     .field-textarea {
