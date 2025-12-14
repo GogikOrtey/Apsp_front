@@ -389,6 +389,31 @@ def step5():
         # Сохраняем код в сессию
         session['code'] = code
         
+        # Переходим на следующий шаг
+        return redirect(url_for('step6'))
+    
+    # Отображаем форму с сохраненными данными
+    saved_data = {'code': session.get('code', '')}
+    
+    return render_template('step5.html', saved_data=saved_data)
+
+@app.route('/step6', methods=['GET', 'POST'])
+def step6():
+    """Шаг 6: Генерация кода"""
+    # Проверяем, что пользователь прошел все предыдущие шаги
+    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session:
+        return redirect(url_for('step1'))
+    
+    # Загружаем описания полей для отображения
+    fields = load_fields_descriptions()
+    
+    if request.method == 'POST':
+        # Получаем код из формы
+        code = request.form.get('code', '')
+        
+        # Сохраняем код в сессию
+        session['code'] = code
+        
         # Проверяем, был ли отредактирован JSON на шаге 4
         result_json = session.get('result_json', {})
         
@@ -415,7 +440,7 @@ def step5():
     # Отображаем форму с сохраненными данными
     saved_data = {'code': session.get('code', '')}
     
-    return render_template('step5.html', saved_data=saved_data)
+    return render_template('step6.html', saved_data=saved_data)
 
 
 @app.route('/success')

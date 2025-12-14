@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Шаг 5 - Генерация кода{% endblock %} 
+{% block title %}Шаг 6 - Генерация кода{% endblock %} 
 
 {% block content %}
 <h1>Генерация кода</h1>
@@ -10,8 +10,8 @@
     <div class="step completed">2</div>
     <div class="step completed">3</div>
     <div class="step completed">4</div>
-    <div class="step active">5</div>
-    <div class="step">6</div>
+    <div class="step completed">5</div>
+    <div class="step active">6</div>
 </div>
 
 <form method="POST" id="codeGenerationForm">
@@ -27,7 +27,7 @@
     </div>
     
     <div class="btn-group">
-        <a href="{{ url_for('step4') }}" class="btn btn-secondary">← Назад</a>
+        <a href="{{ url_for('step5') }}" class="btn btn-secondary">← Назад</a>
         <button type="submit" class="btn btn-primary">Далее →</button>
     </div>
 </form>
