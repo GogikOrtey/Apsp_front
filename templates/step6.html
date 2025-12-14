@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        <div class="accordion-item">
+        <div class="accordion-item" id="status-block">
             <div class="accordion-header" onclick="toggleAccordion(this)">
                 <span class="accordion-title">Status</span>
                 <span class="accordion-icon">▼</span>
@@ -210,9 +210,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
 <script>
+    // ===========================
+    // Настройки
+    // ===========================
+    // Скорость "печати" кода (символов в секунду). Это единственная настройка, которую нужно менять.
+    const CODE_TYPEWRITER_CHARS_PER_SEC = 180;
+
     // Инициализация CodeMirror для отображения кода
     const codeTextarea = document.getElementById('code-gen-textarea');
     let codeEditor = null;
+    let codeTypewriterTimer = null;
+    let codeTypewriterInProgress = false;
     
     if (codeTextarea) {
         codeEditor = CodeMirror.fromTextArea(codeTextarea, {
@@ -242,6 +250,12 @@
 
         // Инициализация высоты при загрузке
         setTimeout(adjustCodeEditorHeight, 100);
+    }
+
+    function openOnlyAccordionItem(targetItem) {
+        if (!targetItem) return;
+        document.querySelectorAll('.accordion-item').forEach(item => item.classList.remove('active'));
+        targetItem.classList.add('active');
     }
 
     // Функция переключения раскрывающегося блока
@@ -305,18 +319,82 @@
                 return response.text();
             })
             .then(text => {
-                codeEditor.setValue(text);
-                // Автоматическое изменение высоты после загрузки
+                startCodeTypewriter(text, function onDone() {
+                    // Когда весь код "сгенерировался" и отобразился:
+                    // - свернуть 2й блок (Code gen)
+                    // - раскрыть 3й блок (Status)
+                    const codeGenBlock = document.getElementById('code-gen-block');
+                    if (codeGenBlock) codeGenBlock.classList.remove('active');
+                    const statusBlock = document.getElementById('status-block');
+                    if (statusBlock) openOnlyAccordionItem(statusBlock);
+                });
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке кода:', error);
+            });
+    }
+
+    function stopCodeTypewriter() {
+        if (codeTypewriterTimer) {
+            clearInterval(codeTypewriterTimer);
+            codeTypewriterTimer = null;
+        }
+        codeTypewriterInProgress = false;
+    }
+
+    function startCodeTypewriter(fullText, onComplete) {
+        if (!codeEditor) return;
+
+        // Если анимация уже идёт — перезапускаем корректно
+        stopCodeTypewriter();
+        codeTypewriterInProgress = true;
+
+        const tickMs = 16; // внутренняя частота обновления (примерно 60fps)
+        const chunkSize = Math.max(1, Math.floor((CODE_TYPEWRITER_CHARS_PER_SEC * tickMs) / 1000));
+
+        const doc = codeEditor.getDoc();
+        doc.setValue('');
+
+        let idx = 0;
+        let lastHeightAdjustAt = 0;
+
+        codeTypewriterTimer = setInterval(function() {
+            if (!codeTypewriterInProgress) return;
+
+            const nextIdx = Math.min(fullText.length, idx + chunkSize);
+            const chunk = fullText.slice(idx, nextIdx);
+            idx = nextIdx;
+
+            const lastLine = doc.lastLine();
+            const lastCh = doc.getLine(lastLine).length;
+            doc.replaceRange(chunk, { line: lastLine, ch: lastCh });
+
+            // Держим "вид" на конце текста (как будто генерация идёт снизу)
+            const scrollInfo = codeEditor.getScrollInfo();
+            codeEditor.scrollTo(null, scrollInfo.height);
+
+            // Не пересчитываем высоту на каждом тике — это дорого.
+            const now = Date.now();
+            if (now - lastHeightAdjustAt > 200) {
+                lastHeightAdjustAt = now;
+                codeEditor.setSize(null, 'auto');
+                const height = codeEditor.getScrollInfo().height;
+                codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
+                codeEditor.refresh();
+            }
+
+            if (idx >= fullText.length) {
+                stopCodeTypewriter();
+                // Финальная подгонка высоты
                 setTimeout(function() {
                     codeEditor.setSize(null, 'auto');
                     const height = codeEditor.getScrollInfo().height;
                     codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
                     codeEditor.refresh();
-                }, 100);
-            })
-            .catch(error => {
-                console.error('Ошибка при загрузке кода:', error);
-            });
+                }, 0);
+                if (typeof onComplete === 'function') onComplete();
+            }
+        }, tickMs);
     }
 
     // Функция для обработки завершения генерации кода
