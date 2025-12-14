@@ -311,6 +311,11 @@
         justify-content: start;
     }
 
+    /* Важно: не даём нашему display:grid перебить стандартный [hidden]{display:none} */
+    .final-actions[hidden] {
+        display: none !important;
+    }
+
     .final-actions__btn {
         display: inline-block;
         padding: 12px 22px;
@@ -548,7 +553,7 @@
         const actionsEl = document.getElementById('final-actions');
         if (!actionsEl) return;
         const shouldShow = !!(code_display_complete && status_message_loaded);
-        if (shouldShow) actionsEl.hidden = false;
+        actionsEl.hidden = !shouldShow;
     }
 
     let statusTypewriterTimer = null;
