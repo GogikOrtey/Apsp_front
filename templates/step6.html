@@ -98,8 +98,22 @@
     }
 
     .CodeMirror-scroll {
+        /* Внутренний скролл CodeMirror не нужен — редактор растягиваем по контенту через JS */
         overflow: hidden !important;
-        height: auto !important;
+    }
+
+    /* Убираем "мигающие" полосы прокрутки CodeMirror (они рисуются отдельными div'ами) */
+    .CodeMirror-vscrollbar,
+    .CodeMirror-hscrollbar,
+    .CodeMirror-scrollbar-filler,
+    .CodeMirror-gutter-filler {
+        display: none !important;
+    }
+
+    /* На всякий случай: скрыть webkit-скроллбар внутри области прокрутки */
+    .CodeMirror-scroll::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
     }
 
     .CodeMirror-sizer {
@@ -231,7 +245,8 @@
     // ===========================
     // Скорость "печати" кода (символов в секунду). Это единственная настройка, которую нужно менять.
     // const CODE_TYPEWRITER_CHARS_PER_SEC = 320;
-    const CODE_TYPEWRITER_CHARS_PER_SEC = 450;
+    // const CODE_TYPEWRITER_CHARS_PER_SEC = 450;
+    const CODE_TYPEWRITER_CHARS_PER_SEC = 370;
 
     // Инициализация CodeMirror для отображения кода
     const codeTextarea = document.getElementById('code-gen-textarea');
@@ -239,6 +254,7 @@
     let codeTypewriterTimer = null;
     let codeTypewriterInProgress = false;
     let lastPageScrollAt = 0;
+    let adjustScheduled = false;
     
     if (codeTextarea) {
         codeEditor = CodeMirror.fromTextArea(codeTextarea, {
@@ -259,16 +275,28 @@
         });
 
         // Инициализация высоты при загрузке
-        setTimeout(adjustCodeEditorHeight, 100);
+        setTimeout(scheduleAdjustCodeEditorHeight, 100);
     }
 
     // Автоматическое изменение высоты редактора
     function adjustCodeEditorHeight() {
         if (!codeEditor) return;
-        codeEditor.setSize(null, 'auto');
-        const height = codeEditor.getScrollInfo().height;
-        codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
+        // Важно: задаём высоту через setSize(px), не трогаем напрямую scrollerElement.style.height,
+        // иначе получаются конфликтующие пересчёты и "дёрганье" на строку.
         codeEditor.refresh();
+        const height = codeEditor.getScrollInfo().height;
+        codeEditor.setSize(null, height + 20);
+    }
+
+    function scheduleAdjustCodeEditorHeight() {
+        if (!codeEditor) return;
+        if (adjustScheduled) return;
+        adjustScheduled = true;
+        requestAnimationFrame(function() {
+            adjustScheduled = false;
+            adjustCodeEditorHeight();
+            keepCodeBlockBottomInView();
+        });
     }
 
     function onAccordionOpened(accordionItem) {
@@ -277,7 +305,7 @@
         // CodeMirror корректно вычисляет размеры только когда блок видим
         if (accordionItem.id === 'code-gen-block' && codeEditor) {
             requestAnimationFrame(function() {
-                adjustCodeEditorHeight();
+                scheduleAdjustCodeEditorHeight();
             });
         }
     }
@@ -436,10 +464,7 @@
             const now = Date.now();
             if (now - lastHeightAdjustAt > 200) {
                 lastHeightAdjustAt = now;
-                codeEditor.setSize(null, 'auto');
-                const height = codeEditor.getScrollInfo().height;
-                codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
-                codeEditor.refresh();
+                scheduleAdjustCodeEditorHeight();
             }
 
             // Если блок уходит ниже экрана — прокручиваем страницу к его низу
@@ -449,11 +474,7 @@
                 stopCodeTypewriter();
                 // Финальная подгонка высоты
                 setTimeout(function() {
-                    codeEditor.setSize(null, 'auto');
-                    const height = codeEditor.getScrollInfo().height;
-                    codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
-                    codeEditor.refresh();
-                    keepCodeBlockBottomInView();
+                    scheduleAdjustCodeEditorHeight();
                 }, 0);
                 if (typeof onComplete === 'function') onComplete();
             }
