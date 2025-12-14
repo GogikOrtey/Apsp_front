@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, Response
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, Response, send_file
 import json
 import os
+import zipfile
+from io import BytesIO
 from datetime import datetime
 from collections import OrderedDict
 from result_processer import process_results
@@ -521,6 +523,68 @@ def get_message_global():
             return Response('', mimetype='text/plain; charset=utf-8')
     except Exception as e:
         return Response(f'Ошибка чтения файла: {str(e)}', mimetype='text/plain; charset=utf-8', status=500)
+
+
+@app.route('/download/parser_ts')
+def download_parser_ts():
+    """Скачать сгенерированный парсер .ts"""
+    code_file_path = os.path.join('content_files', 'result_code.ts')
+    if not os.path.exists(code_file_path):
+        return Response('Файл result_code.ts не найден', mimetype='text/plain; charset=utf-8', status=404)
+
+    return send_file(
+        code_file_path,
+        as_attachment=True,
+        download_name='result_code.ts',
+        mimetype='text/plain; charset=utf-8'
+    )
+
+
+@app.route('/download/all_files_zip')
+def download_all_files_zip():
+    """Скачать все полезные выходные файлы одним .zip"""
+    base_dir = 'content_files'
+    if not os.path.isdir(base_dir):
+        return Response('Папка content_files не найдена', mimetype='text/plain; charset=utf-8', status=404)
+
+    required_names = [
+        'result_code.ts',
+        'output.log',
+        'message_global.txt',
+    ]
+
+    candidates = []
+    missing = []
+    for name in required_names:
+        full_path = os.path.join(base_dir, name)
+        if not os.path.isfile(full_path):
+            missing.append(name)
+        else:
+            candidates.append((name, full_path))
+
+    if missing:
+        return Response(
+            'Не найдены файлы: ' + ', '.join(missing),
+            mimetype='text/plain; charset=utf-8',
+            status=404
+        )
+
+    buf = BytesIO()
+    # Без сжатия (store)
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_STORED) as zf:
+        for arcname, full_path in candidates:
+            zf.write(full_path, arcname=arcname)
+
+    buf.seek(0)
+
+    # Имя архива: APSP_gen_ + timestamp (дата и время)
+    ts = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=f'APSP_gen_{ts}.zip',
+        mimetype='application/zip'
+    )
 
 @app.route('/.well-known/appspecific/com.chrome.devtools.json')
 def chrome_devtools():

@@ -55,9 +55,16 @@
         </div>
     </div>
 
-    <div class="btn-group">
-        <a href="{{ url_for('step5') }}" class="btn btn-secondary">← Назад</a>
-        <button type="submit" class="btn btn-primary">Далее →</button>
+    <div class="final-actions-bar">
+        <!-- Плейсхолдер сохраняет высоту нижней зоны, пока кнопки скрыты -->
+        <div class="final-actions-bar__placeholder" aria-hidden="true"></div>
+
+        <!-- Показываем только после завершения всех этапов и допечатывания Status -->
+        <div id="final-actions" class="final-actions" hidden>
+            <a class="final-actions__btn final-actions__btn--ts" href="{{ url_for('download_parser_ts') }}">.ts</a>
+            <a class="final-actions__btn final-actions__btn--zip" href="{{ url_for('download_all_files_zip') }}">Скачать все файлы .zip</a>
+            <a class="final-actions__btn final-actions__btn--start" href="{{ url_for('index') }}">В начало</a>
+        </div>
     </div>
 </form>
 {% endblock %}
@@ -282,8 +289,68 @@
         margin-bottom: 20px;
     }
 
-    .btn-group {
+    .final-actions-bar {
         margin-top: 20px;
+        display: grid;
+        grid-template-areas: "stack";
+    }
+
+    /* Резервируем высоту "как сейчас" (под старую пару кнопок) */
+    .final-actions-bar__placeholder {
+        grid-area: stack;
+        min-height: 44px;
+    }
+
+    .final-actions {
+        grid-area: stack;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: max-content;
+        gap: 10px;
+        align-items: center;
+        justify-content: start;
+    }
+
+    .final-actions__btn {
+        display: inline-block;
+        padding: 12px 22px;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1;
+        text-decoration: none;
+        cursor: pointer;
+        user-select: none;
+        transition: filter 0.2s, transform 0.06s;
+    }
+
+    .final-actions__btn:hover {
+        filter: brightness(0.97);
+    }
+
+    .final-actions__btn:active {
+        transform: scale(0.99);
+    }
+
+    /* .ts — заливка светло-голубая, граница голубая */
+    .final-actions__btn--ts {
+        background: #cfefff;
+        border: 2px solid #3da9ff;
+        color: #0b3c5d;
+    }
+
+    /* Скачать все файлы .zip — заливка зелёная, границы нет */
+    .final-actions__btn--zip {
+        background: #28a745;
+        border: 0;
+        color: #ffffff;
+    }
+
+    /* В начало — серая, без границы */
+    .final-actions__btn--start {
+        background: #9aa0a6;
+        border: 0;
+        color: #ffffff;
     }
 </style>
 {% endblock %}
@@ -477,6 +544,13 @@
     // Истинное завершение: когда весь код уже отобразился в Code gen (typewriter закончился)
     let code_display_complete = false;
     let status_message_loaded = false;
+    function showFinalActionsIfReady() {
+        const actionsEl = document.getElementById('final-actions');
+        if (!actionsEl) return;
+        const shouldShow = !!(code_display_complete && status_message_loaded);
+        if (shouldShow) actionsEl.hidden = false;
+    }
+
     let statusTypewriterTimer = null;
     let statusTypewriterInProgress = false;
 
@@ -731,6 +805,7 @@
             if (idx >= fullText.length) {
                 stopStatusTypewriter();
                 status_message_loaded = true;
+                showFinalActionsIfReady();
             }
         }, tickMs);
     }
@@ -990,7 +1065,10 @@
         setTimeout(function() {
             code_gen_complete = true;
             handleCodeGenComplete();
-        }, 50000);
+        }, 5000);
+
+        // На всякий случай: если состояние уже готово (например, при быстром переходе/кэше)
+        showFinalActionsIfReady();
     });
 </script>
 {% endblock %}
