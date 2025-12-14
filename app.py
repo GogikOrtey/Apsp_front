@@ -505,6 +505,23 @@ def get_result_code():
     except Exception as e:
         return Response(f'Ошибка чтения файла: {str(e)}', mimetype='text/plain; charset=utf-8', status=500)
 
+
+@app.route('/api/message_global')
+def get_message_global():
+    """Возвращает содержимое файла message_global.txt (с обрезкой переносов строк сверху/снизу)."""
+    message_file_path = 'content_files/message_global.txt'
+    try:
+        if os.path.exists(message_file_path):
+            with open(message_file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            # Удаляем переносы строк только сверху и снизу (внутренние переносы сохраняем)
+            content = content.strip('\r\n')
+            return Response(content, mimetype='text/plain; charset=utf-8')
+        else:
+            return Response('', mimetype='text/plain; charset=utf-8')
+    except Exception as e:
+        return Response(f'Ошибка чтения файла: {str(e)}', mimetype='text/plain; charset=utf-8', status=500)
+
 @app.route('/.well-known/appspecific/com.chrome.devtools.json')
 def chrome_devtools():
     """Обработчик для Chrome DevTools - убирает 404 предупреждения"""

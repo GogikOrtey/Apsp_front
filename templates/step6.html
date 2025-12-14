@@ -36,7 +36,6 @@
             </div>
             <div class="accordion-content">
                 <div class="accordion-content-inner">
-                    <p class="accordion-text">Текст для Code gen блока</p>
                     <textarea id="code-gen-textarea" class="accordion-textarea" readonly>Сгенерированный код будет отображаться здесь</textarea>
                 </div>
             </div>
@@ -49,8 +48,8 @@
             </div>
             <div class="accordion-content">
                 <div class="accordion-content-inner">
-                    <p class="accordion-text">Текст для Status блока</p>
-                    <textarea class="accordion-textarea" readonly>Статус будет отображаться здесь</textarea>
+                    <!-- <p class="accordion-text">Статус генерации:</p> -->
+                    <textarea id="status-textarea" class="accordion-textarea" readonly>Статус будет отображаться здесь</textarea>
                 </div>
             </div>
         </div>
@@ -255,6 +254,7 @@
     // const CODE_AUTO_SCROLL_MODE = 'follow_smooth'; // 'follow' | 'follow_smooth' | 'paged'
     const CODE_AUTO_SCROLL_MODE = 'paged'; // 'follow' | 'follow_smooth' | 'paged'
     const CODE_PAGED_SCROLL_LINES = 20;
+    
     // Запас по высоте редактора (в строках), чтобы при добавлении новой строки
     // не было микродёрганий из-за пересчётов высоты/внутренней прокрутки.
     // ВАЖНО: этот запас нужен только ВО ВРЕМЯ "печати" (генерации). После завершения
@@ -344,6 +344,11 @@
                 scheduleAdjustCodeEditorHeight();
             });
         }
+
+        // Подставляем итоговый статус только после завершения генерации и при раскрытии Status
+        if (accordionItem.id === 'status-block') {
+            maybeLoadGlobalStatusMessage();
+        }
     }
 
     function openOnlyAccordionItem(targetItem) {
@@ -402,6 +407,32 @@
 
     // Фиктивная переменная для отслеживания завершения генерации кода
     let code_gen_complete = false;
+    // Истинное завершение: когда весь код уже отобразился в Code gen (typewriter закончился)
+    let code_display_complete = false;
+    let status_message_loaded = false;
+
+    function maybeLoadGlobalStatusMessage() {
+        if (!code_display_complete) return;
+        if (status_message_loaded) return;
+
+        const statusTextarea = document.getElementById('status-textarea');
+        if (!statusTextarea) return;
+
+        fetch('/api/message_global')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка при загрузке итогового статуса');
+                }
+                return response.text();
+            })
+            .then(text => {
+                statusTextarea.value = text;
+                status_message_loaded = true;
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении итогового статуса:', error);
+            });
+    }
 
     // Функция для загрузки содержимого result_code.ts
     function loadResultCode() {
@@ -416,6 +447,9 @@
             })
             .then(text => {
                 startCodeTypewriter(text, function onDone() {
+                    // Код полностью отобразился
+                    code_display_complete = true;
+
                     // Когда весь код "сгенерировался" и отобразился:
                     // делаем паузу 3 секунды и потом
                     // - свернуть 2й блок (Code gen)
@@ -424,7 +458,11 @@
                         const codeGenBlock = document.getElementById('code-gen-block');
                         if (codeGenBlock) codeGenBlock.classList.remove('active');
                         const statusBlock = document.getElementById('status-block');
-                        if (statusBlock) openOnlyAccordionItem(statusBlock);
+                        if (statusBlock) {
+                            openOnlyAccordionItem(statusBlock);
+                            // После автоперехода в Status подставляем итоговый статус из файла
+                            maybeLoadGlobalStatusMessage();
+                        }
                     }, 3000);
                 });
             })
