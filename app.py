@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 import json
 import os
 from datetime import datetime
+from collections import OrderedDict
 from result_processer import process_results
 
 app = Flask(__name__)
@@ -43,7 +44,7 @@ def save_to_json(data):
     
     # Сохраняем обратно в файл
     with open(JSON_FILE, 'w', encoding='utf-8') as f:
-        json.dump(submissions, f, ensure_ascii=False, indent=2)
+        json.dump(submissions, f, ensure_ascii=False, indent=2, sort_keys=False)
 
 @app.route('/')
 def index():
@@ -54,6 +55,8 @@ def index():
 @app.route('/step0')
 def step0():
     """Нулевой шаг: Приветственное сообщение"""
+    # Очищаем сессию при попадании на step0 (начало новой формы)
+    session.clear()
     return render_template('step0.html')
 
 @app.route('/step1', methods=['GET', 'POST'])
@@ -152,7 +155,8 @@ def step2():
         # Формируем список примеров
         examples_list = []
         for example_num in sorted_example_numbers:
-            example_dict = {}
+            # Используем OrderedDict для сохранения порядка полей
+            example_dict = OrderedDict()
             for field_key in selected_fields:
                 field_name = f'example_{example_num}_{field_key}'
                 field_value = request.form.get(field_name, '')
@@ -162,14 +166,14 @@ def step2():
             # Добавляем все примеры, даже если все поля пустые
             examples_list.append(example_dict)
         
-        # Формируем итоговый JSON
-        result_json = {
-            "simple": examples_list
-        }
+        # Формируем итоговый JSON с сохранением порядка ключей
+        result_json = OrderedDict([
+            ("simple", examples_list)
+        ])
         
         # Выводим результат в консоль
         print('\n=== Результаты заполнения полей (шаг 2) ===')
-        print(json.dumps(result_json, ensure_ascii=False, indent=2))
+        print(json.dumps(result_json, ensure_ascii=False, indent=2, sort_keys=False))
         print('=' * 30 + '\n')
         
         # Сохраняем данные примеров в сессию
@@ -210,23 +214,23 @@ def step3():
                 if value:
                     links_items.append(value)
         
-        # Формируем объект поискового запроса
-        search_request = {
-            "query": query,
-            "url_search_query_page_2": url_search_query_page_2,
-            "count_of_page_on_pagination": count_of_page_on_pagination,
-            "total_count_of_results": total_count_of_results,
-            "links_items": links_items
-        }
+        # Формируем объект поискового запроса с сохранением порядка ключей
+        search_request = OrderedDict([
+            ("query", query),
+            ("url_search_query_page_2", url_search_query_page_2),
+            ("count_of_page_on_pagination", count_of_page_on_pagination),
+            ("total_count_of_results", total_count_of_results),
+            ("links_items", links_items)
+        ])
         
-        # Формируем итоговый JSON
-        result_json = {
-            "search_requests": [search_request]
-        }
+        # Формируем итоговый JSON с сохранением порядка ключей
+        result_json = OrderedDict([
+            ("search_requests", [search_request])
+        ])
         
         # Выводим результат в консоль
         print('\n=== Результаты заполнения полей (шаг 3) ===')
-        print(json.dumps(result_json, ensure_ascii=False, indent=2))
+        print(json.dumps(result_json, ensure_ascii=False, indent=2, sort_keys=False))
         print('=' * 30 + '\n')
         
         # Сохраняем данные в сессию
@@ -234,7 +238,8 @@ def step3():
         
         # Обрабатываем и валидируем данные из шагов 2 и 3
         examples_data = session.get('examples_data', {})
-        process_results(examples_data, result_json)
+        selected_fields = session.get('selected_fields', [])
+        process_results(examples_data, result_json, selected_fields)
         
         # Удаляем редактированный JSON из сессии, чтобы он был собран заново из данных шагов 2 и 3
         if 'result_json' in session:
@@ -275,7 +280,7 @@ def step4():
                 
                 # Выводим отредактированный JSON в консоль сервера
                 print('\n=== Отредактированный JSON (шаг 4) ===')
-                print(json.dumps(edited_json, ensure_ascii=False, indent=2))
+                print(json.dumps(edited_json, ensure_ascii=False, indent=2, sort_keys=False))
                 print('=' * 30 + '\n')
             except json.JSONDecodeError:
                 # Если JSON невалидный (хотя валидация должна была пройти на клиенте),
@@ -295,7 +300,8 @@ def step4():
         # (пользователь пришел с шага 3)
         examples_data = session.get('examples_data', {})
         search_requests_data = session.get('search_requests_data', {})
-        result_json = process_results(examples_data, search_requests_data)
+        selected_fields = session.get('selected_fields', [])
+        result_json = process_results(examples_data, search_requests_data, selected_fields)
         
         # Сохраняем результат в сессию для последующего использования
         session['result_json'] = result_json
@@ -365,7 +371,23 @@ def success():
 @app.route('/reset')
 def reset():
     """Сброс формы - возврат к началу"""
+    # Очищаем сессию
     session.clear()
+    
+    # Опционально: очищаем сохраненные данные из файла (если передан параметр full=1)
+    if request.args.get('full') == '1':
+        if os.path.exists(JSON_FILE):
+            # Создаем резервную копию перед удалением
+            backup_file = f'{JSON_FILE}.backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+            try:
+                import shutil
+                shutil.copy2(JSON_FILE, backup_file)
+                # Очищаем файл (создаем пустой массив)
+                with open(JSON_FILE, 'w', encoding='utf-8') as f:
+                    json.dump([], f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                print(f'Ошибка при создании резервной копии: {e}')
+    
     return redirect(url_for('step0'))
 
 @app.route('/content/<path:filename>')

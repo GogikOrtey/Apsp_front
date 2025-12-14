@@ -25,8 +25,12 @@
     }
     
     .CodeMirror-scroll {
-        min-height: 200px;
-        max-height: 600px;
+        overflow: hidden !important;
+        height: auto !important;
+    }
+    
+    .CodeMirror-sizer {
+        border-bottom: 0 !important;
     }
     
     .error-message {
@@ -142,7 +146,7 @@
     function adjustEditorHeight() {
         editor.setSize(null, 'auto');
         const height = editor.getScrollInfo().height;
-        editor.getScrollerElement().style.height = Math.min(Math.max(height + 20, 200), 600) + 'px';
+        editor.getScrollerElement().style.height = (height + 20) + 'px';
         editor.refresh();
     }
     
