@@ -34,7 +34,7 @@
             </div>
             <div class="accordion-content">
                 <p class="accordion-text">Текст для Code gen блока</p>
-                <textarea id="code-gen-textarea" class="accordion-textarea" readonly>Сгенерированный код будет отображаться здесь</textarea>
+                <textarea id="code-gen-textarea" style="display: none;">Сгенерированный код будет отображаться здесь</textarea>
             </div>
         </div>
 
@@ -58,9 +58,34 @@
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/nord.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/cobalt.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
 <style>
     .container {
-        max-width: 800px !important;
+        max-width: 900px !important;
+    }
+
+    .CodeMirror {
+        margin-top: 10px;
+        border: 1px solid #444;
+        border-radius: 5px;
+        height: auto;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .CodeMirror-scroll {
+        overflow: hidden !important;
+        height: auto !important;
+    }
+
+    .CodeMirror-sizer {
+        border-bottom: 0 !important;
     }
 
     .accordion-container {
@@ -167,7 +192,44 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
 <script>
+    // Инициализация CodeMirror для отображения кода
+    const codeTextarea = document.getElementById('code-gen-textarea');
+    let codeEditor = null;
+    
+    if (codeTextarea) {
+        codeEditor = CodeMirror.fromTextArea(codeTextarea, {
+            mode: { name: "javascript", typescript: true },
+            theme: "dracula",
+            lineNumbers: true,
+            lineWrapping: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            styleActiveLine: true,
+            indentUnit: 4,
+            tabSize: 4,
+            indentWithTabs: false,
+            viewportMargin: Infinity,
+            readOnly: true
+        });
+
+        // Автоматическое изменение высоты редактора
+        function adjustCodeEditorHeight() {
+            codeEditor.setSize(null, 'auto');
+            const height = codeEditor.getScrollInfo().height;
+            codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
+            codeEditor.refresh();
+        }
+
+        // Инициализация высоты при загрузке
+        setTimeout(adjustCodeEditorHeight, 100);
+    }
+
     // Функция переключения раскрывающегося блока
     function toggleAccordion(header) {
         const accordionItem = header.parentElement;
@@ -219,8 +281,7 @@
 
     // Функция для загрузки содержимого result_code.ts
     function loadResultCode() {
-        const codeTextarea = document.getElementById('code-gen-textarea');
-        if (!codeTextarea) return;
+        if (!codeEditor) return;
 
         fetch('/api/result_code')
             .then(response => {
@@ -230,7 +291,14 @@
                 return response.text();
             })
             .then(text => {
-                codeTextarea.value = text;
+                codeEditor.setValue(text);
+                // Автоматическое изменение высоты после загрузки
+                setTimeout(function() {
+                    codeEditor.setSize(null, 'auto');
+                    const height = codeEditor.getScrollInfo().height;
+                    codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
+                    codeEditor.refresh();
+                }, 100);
             })
             .catch(error => {
                 console.error('Ошибка при загрузке кода:', error);
