@@ -16,7 +16,7 @@
 
 <form method="POST" id="codeGenerationForm">
     <div class="accordion-container">
-        <div class="accordion-item active">
+        <div class="accordion-item active" id="log-block">
             <div class="accordion-header" onclick="toggleAccordion(this)">
                 <span class="accordion-title">Log</span>
                 <span class="accordion-icon">▼</span>
@@ -27,14 +27,14 @@
             </div>
         </div>
 
-        <div class="accordion-item">
+        <div class="accordion-item" id="code-gen-block">
             <div class="accordion-header" onclick="toggleAccordion(this)">
                 <span class="accordion-title">Code gen</span>
                 <span class="accordion-icon">▼</span>
             </div>
             <div class="accordion-content">
                 <p class="accordion-text">Текст для Code gen блока</p>
-                <textarea class="accordion-textarea" readonly>Сгенерированный код будет отображаться здесь</textarea>
+                <textarea id="code-gen-textarea" class="accordion-textarea" readonly>Сгенерированный код будет отображаться здесь</textarea>
             </div>
         </div>
 
@@ -214,12 +214,62 @@
             });
     }
 
+    // Фиктивная переменная для отслеживания завершения генерации кода
+    let code_gen_complete = false;
+
+    // Функция для загрузки содержимого result_code.ts
+    function loadResultCode() {
+        const codeTextarea = document.getElementById('code-gen-textarea');
+        if (!codeTextarea) return;
+
+        fetch('/api/result_code')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка при загрузке кода');
+                }
+                return response.text();
+            })
+            .then(text => {
+                codeTextarea.value = text;
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке кода:', error);
+            });
+    }
+
+    // Функция для обработки завершения генерации кода
+    function handleCodeGenComplete() {
+        if (!code_gen_complete) return;
+
+        // Скрываем блок Log
+        const logBlock = document.getElementById('log-block');
+        if (logBlock) {
+            logBlock.classList.remove('active');
+        }
+
+        // Раскрываем блок Code gen
+        const codeGenBlock = document.getElementById('code-gen-block');
+        if (codeGenBlock) {
+            codeGenBlock.classList.add('active');
+        }
+
+        // Загружаем содержимое файла в textarea
+        loadResultCode();
+    }
+
     // Обновляем содержимое при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         updateLogContent();
         
         // Обновляем содержимое каждые 500 мс (2 раза в секунду)
         setInterval(updateLogContent, 500);
+
+        /////////////////////////////////////////////////////////// Потом поменять
+        // Устанавливаем code_gen_complete в true через 15 секунд
+        setTimeout(function() {
+            code_gen_complete = true;
+            handleCodeGenComplete();
+        }, 5000);
     });
 </script>
 {% endblock %}

@@ -491,6 +491,20 @@ def get_log():
     except Exception as e:
         return Response(f'Ошибка чтения файла: {str(e)}', mimetype='text/plain; charset=utf-8', status=500)
 
+@app.route('/api/result_code')
+def get_result_code():
+    """Возвращает содержимое файла result_code.ts"""
+    code_file_path = 'content_files/result_code.ts'
+    try:
+        if os.path.exists(code_file_path):
+            with open(code_file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return Response(content, mimetype='text/plain; charset=utf-8')
+        else:
+            return Response('', mimetype='text/plain; charset=utf-8')
+    except Exception as e:
+        return Response(f'Ошибка чтения файла: {str(e)}', mimetype='text/plain; charset=utf-8', status=500)
+
 @app.route('/.well-known/appspecific/com.chrome.devtools.json')
 def chrome_devtools():
     """Обработчик для Chrome DevTools - убирает 404 предупреждения"""
