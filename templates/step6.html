@@ -22,8 +22,10 @@
                 <span class="accordion-icon">▼</span>
             </div>
             <div class="accordion-content">
-                <p class="accordion-text">Текст для Log блока</p>
-                <textarea id="log-textarea" class="accordion-textarea" readonly>Логи будут отображаться здесь</textarea>
+                <div class="accordion-content-inner">
+                    <p class="accordion-text">Текст для Log блока</p>
+                    <textarea id="log-textarea" class="accordion-textarea" readonly>Логи будут отображаться здесь</textarea>
+                </div>
             </div>
         </div>
 
@@ -33,8 +35,10 @@
                 <span class="accordion-icon">▼</span>
             </div>
             <div class="accordion-content">
-                <p class="accordion-text">Текст для Code gen блока</p>
-                <textarea id="code-gen-textarea" style="display: none;">Сгенерированный код будет отображаться здесь</textarea>
+                <div class="accordion-content-inner">
+                    <p class="accordion-text">Текст для Code gen блока</p>
+                    <textarea id="code-gen-textarea" class="accordion-textarea" readonly>Сгенерированный код будет отображаться здесь</textarea>
+                </div>
             </div>
         </div>
 
@@ -44,8 +48,10 @@
                 <span class="accordion-icon">▼</span>
             </div>
             <div class="accordion-content">
-                <p class="accordion-text">Текст для Status блока</p>
-                <textarea class="accordion-textarea" readonly>Статус будет отображаться здесь</textarea>
+                <div class="accordion-content-inner">
+                    <p class="accordion-text">Текст для Status блока</p>
+                    <textarea class="accordion-textarea" readonly>Статус будет отображаться здесь</textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -151,13 +157,23 @@
     }
 
     .accordion-content {
-        display: none;
-        padding: 20px;
+        display: grid;
+        grid-template-rows: 0fr;
+        padding: 0 20px;
+        opacity: 0;
         background-color: #fff;
+        transition: grid-template-rows 260ms ease, padding 260ms ease, opacity 200ms ease;
     }
 
     .accordion-item.active .accordion-content {
-        display: block;
+        grid-template-rows: 1fr;
+        padding: 20px;
+        opacity: 1;
+    }
+
+    .accordion-content-inner {
+        overflow: hidden;
+        min-height: 0;
     }
 
     .accordion-text {
@@ -242,22 +258,35 @@
             readOnly: true
         });
 
-        // Автоматическое изменение высоты редактора
-        function adjustCodeEditorHeight() {
-            codeEditor.setSize(null, 'auto');
-            const height = codeEditor.getScrollInfo().height;
-            codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
-            codeEditor.refresh();
-        }
-
         // Инициализация высоты при загрузке
         setTimeout(adjustCodeEditorHeight, 100);
+    }
+
+    // Автоматическое изменение высоты редактора
+    function adjustCodeEditorHeight() {
+        if (!codeEditor) return;
+        codeEditor.setSize(null, 'auto');
+        const height = codeEditor.getScrollInfo().height;
+        codeEditor.getScrollerElement().style.height = (height + 20) + 'px';
+        codeEditor.refresh();
+    }
+
+    function onAccordionOpened(accordionItem) {
+        if (!accordionItem) return;
+
+        // CodeMirror корректно вычисляет размеры только когда блок видим
+        if (accordionItem.id === 'code-gen-block' && codeEditor) {
+            requestAnimationFrame(function() {
+                adjustCodeEditorHeight();
+            });
+        }
     }
 
     function openOnlyAccordionItem(targetItem) {
         if (!targetItem) return;
         document.querySelectorAll('.accordion-item').forEach(item => item.classList.remove('active'));
         targetItem.classList.add('active');
+        onAccordionOpened(targetItem);
     }
 
     // Функция переключения раскрывающегося блока
@@ -273,6 +302,7 @@
         // Открываем текущий блок, если он был закрыт
         if (!isActive) {
             accordionItem.classList.add('active');
+            onAccordionOpened(accordionItem);
         }
     }
 
@@ -444,6 +474,7 @@
         const codeGenBlock = document.getElementById('code-gen-block');
         if (codeGenBlock) {
             codeGenBlock.classList.add('active');
+            onAccordionOpened(codeGenBlock);
         }
 
         // Загружаем содержимое файла в textarea
