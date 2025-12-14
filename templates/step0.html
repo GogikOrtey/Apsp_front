@@ -31,7 +31,8 @@
     }
     
     .start-button {
-        padding: 15px 50px;
+        /* padding: 15px 50px; */
+        padding: 15px 20px;
         font-size: 18px;
         background: #667eea;
         color: white;
@@ -53,7 +54,7 @@
         display: grid;
         gap: 14px;
         /* width: min(520px, 100%); */
-        width: min(350px, 100%);
+        width: min(400px, 100%);
         justify-items: stretch;
     }
 
@@ -85,7 +86,7 @@
     </div>
     <div class="welcome-actions">
         <a href="{{ url_for('step1') }}" class="start-button">Начать заполнение полей</a>
-        <a href="{{ url_for('step4') }}" class="start-button secondary-button">Перейти к заполнению JSON</a>
+        <a href="{{ url_for('step4') }}" class="start-button secondary-button">&lt;/&gt; Перейти к заполнению JSON &lt;/&gt;</a>
     </div>
 </div>
 {% endblock %}

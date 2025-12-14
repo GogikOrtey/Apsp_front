@@ -111,6 +111,7 @@ def index():
     session.clear()  # Очищаем сессию при начале новой формы
     return redirect(url_for('step0'))
 
+#region step0
 @app.route('/step0')
 def step0():
     """Нулевой шаг: Приветственное сообщение"""
@@ -118,6 +119,7 @@ def step0():
     session.clear()
     return render_template('step0.html')
 
+#region step1
 @app.route('/step1', methods=['GET', 'POST'])
 def step1():
     """Шаг 1: Выбор полей"""
@@ -175,6 +177,7 @@ def step1():
                          fields=fields_for_display,
                          selected_fields=selected_fields_for_display)
 
+#region step2
 @app.route('/step2', methods=['GET', 'POST'])
 def step2():
     """Шаг 2: Заполнение полей примерами"""
@@ -250,6 +253,7 @@ def step2():
                          selected_fields=selected_fields,
                          fields_descriptions=fields_descriptions)
 
+#region step3
 @app.route('/step3', methods=['GET', 'POST'])
 def step3():
     """Шаг 3: Вставьте данные для parsePage"""
@@ -317,12 +321,19 @@ def step3():
     return render_template('step3.html',
                          saved_data=saved_data)
 
+#region step4
 @app.route('/step4', methods=['GET', 'POST'])
 def step4():
     """Шаг 4: Подтверждение и итог"""
-    # Проверяем, что пользователь прошел все шаги
-    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session:
-        return redirect(url_for('step1'))
+    # Раньше step4 требовал прохождения шагов 1-3 и редиректил на step1.
+    # Но step4 может быть точкой входа для ручного заполнения JSON, поэтому
+    # инициализируем безопасные дефолты, если пользователь пришёл напрямую.
+    if 'selected_fields' not in session:
+        session['selected_fields'] = []
+    if 'examples_data' not in session:
+        session['examples_data'] = OrderedDict([("simple", [])])
+    if 'search_requests_data' not in session:
+        session['search_requests_data'] = OrderedDict([("search_requests", [])])
     
     # Загружаем описания полей для отображения
     fields = load_fields_descriptions()
@@ -374,6 +385,7 @@ def step4():
     
     return render_template('step4.html', result_json_str=result_json_str)
 
+#region step5
 @app.route('/step5', methods=['GET', 'POST'])
 def step5():
     """Шаг 5: Генерация кода"""
@@ -396,6 +408,7 @@ def step5():
     
     return render_template('step5.html', saved_data=saved_data)
 
+#region step6
 @app.route('/step6', methods=['GET', 'POST'])
 def step6():
     """Шаг 6: Генерация кода"""
