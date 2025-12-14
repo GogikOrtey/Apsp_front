@@ -188,9 +188,27 @@ def step2():
 
 @app.route('/step3', methods=['GET', 'POST'])
 def step3():
-    """Шаг 3: Выбор опций"""
+    """Шаг 3: Вставьте данные для parsePage"""
     # Проверяем, что пользователь прошел предыдущие шаги
     if 'selected_fields' not in session or 'examples_data' not in session:
+        return redirect(url_for('step1'))
+    
+    if request.method == 'POST':
+        # Сохраняем данные parsePage в сессию
+        session['parsePageData'] = request.form.get('parsePageData', '')
+        
+        # Переходим на следующий шаг
+        return redirect(url_for('step4'))
+    
+    # Отображаем форму с сохраненными данными
+    return render_template('step3.html',
+                         parsePageData=session.get('parsePageData', ''))
+
+@app.route('/step4', methods=['GET', 'POST'])
+def step4():
+    """Шаг 4: Выбор опций"""
+    # Проверяем, что пользователь прошел предыдущие шаги
+    if 'selected_fields' not in session or 'examples_data' not in session or 'parsePageData' not in session:
         return redirect(url_for('step1'))
     
     if request.method == 'POST':
@@ -203,7 +221,7 @@ def step3():
         return redirect(url_for('summary'))
     
     # Отображаем форму с сохраненными данными
-    return render_template('step3.html',
+    return render_template('step4.html',
                          interests=session.get('interests', []),
                          newsletter=session.get('newsletter', 'no'),
                          comments=session.get('comments', ''))
@@ -212,7 +230,7 @@ def step3():
 def summary():
     """Финальная страница: Подтверждение и итог"""
     # Проверяем, что пользователь прошел все шаги
-    if 'selected_fields' not in session or 'examples_data' not in session or 'interests' not in session:
+    if 'selected_fields' not in session or 'examples_data' not in session or 'parsePageData' not in session or 'interests' not in session:
         return redirect(url_for('step1'))
     
     # Загружаем описания полей для отображения
@@ -231,6 +249,7 @@ def summary():
             form_data = {
                 'selected_fields': selected_fields_data,
                 'examples_data': session.get('examples_data', {}),
+                'parsePageData': session.get('parsePageData', ''),
                 'interests': session.get('interests', []),
                 'newsletter': session.get('newsletter', 'no'),
                 'comments': session.get('comments', '')
@@ -243,7 +262,7 @@ def summary():
             return redirect(url_for('success'))
         else:
             # Возвращаемся на предыдущий шаг
-            return redirect(url_for('step3'))
+            return redirect(url_for('step4'))
     
     # Собираем все данные для отображения
     selected_fields = session.get('selected_fields', [])
@@ -255,6 +274,7 @@ def summary():
     form_data = {
         'selected_fields': selected_fields_data,
         'examples_data': session.get('examples_data', {}),
+        'parsePageData': session.get('parsePageData', ''),
         'interests': session.get('interests', []),
         'newsletter': session.get('newsletter', 'no'),
         'comments': session.get('comments', '')
