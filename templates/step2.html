@@ -184,9 +184,9 @@
         bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
-        margin-bottom: 5px;
+        margin-bottom: -20px;
         padding: 6px 10px;
-        background: #333;
+        background: #333333ec;
         color: white;
         border-radius: 4px;
         font-size: 12px;
@@ -204,7 +204,7 @@
         left: 50%;
         transform: translateX(-50%);
         border: 5px solid transparent;
-        border-top-color: #333;
+        border-top-color: #333333ec;
     }
     
     .custom-tooltip.show {
@@ -368,7 +368,8 @@
                             textarea.classList.add('error');
                             const fieldDescription = fieldsDescriptions[fieldKey] || fieldKey;
                             // Показываем tooltip над полем
-                            showTooltip(textarea, `Поле "${fieldDescription}" обязательно для заполнения`);
+                            // showTooltip(textarea, `Поле "${fieldDescription}" обязательно для заполнения`);
+                            showTooltip(textarea, `Поле обязательно для заполнения`);
                         }
                     }
                 }
