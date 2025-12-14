@@ -304,11 +304,10 @@
     .final-actions {
         grid-area: stack;
         display: grid;
-        grid-auto-flow: column;
-        grid-auto-columns: max-content;
+        grid-template-columns: 1fr 4fr 1fr;
         gap: 10px;
         align-items: center;
-        justify-content: start;
+        justify-content: stretch;
     }
 
     /* Важно: не даём нашему display:grid перебить стандартный [hidden]{display:none} */
@@ -318,6 +317,8 @@
 
     .final-actions__btn {
         display: inline-block;
+        width: 100%;
+        text-align: center;
         padding: 12px 22px;
         border-radius: 5px;
         font-size: 16px;
@@ -339,9 +340,13 @@
 
     /* .ts — заливка светло-голубая, граница голубая */
     .final-actions__btn--ts {
-        background: #cfefff;
-        border: 2px solid #3da9ff;
-        color: #0b3c5d;
+        background: #667eea;
+        border: 0;
+        color: #ffffff;
+    }
+
+    .final-actions__btn--ts:hover {
+        background: #5568d3;
     }
 
     /* Скачать все файлы .zip — заливка зелёная, границы нет */
