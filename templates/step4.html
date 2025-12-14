@@ -5,11 +5,12 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night-bright.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/nord.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/cobalt.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/cobalt.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night-eighties.min.css">
 <style>
     .container {
         max-width: 800px !important;
@@ -121,13 +122,13 @@
     const form = document.getElementById('json-form');
 
     // Инициализация CodeMirror
-    // Доступные темы, похожие на VS Dark:
-    // "material" - наиболее похожа на VS Dark (рекомендуется)
-    // "tomorrow-night" - классическая темная тема
-    // "dracula" - популярная темная тема
-    // "nord" - холодная темная тема
-    // "cobalt" - темная с синими оттенками
-    // "monokai" - текущая тема
+    // Тёмные темы CodeMirror (5.x), которые обычно ближе всего к Visual Studio Dark:
+    // "material-darker" / "material-ocean" - наиболее “VS-like” варианты material
+    // "darcula" / "dracula" - похожие тёмные темы
+    // "nord" - холодная тёмная тема
+    // "cobalt" - тёмная с синими оттенками
+    // "tomorrow-night-bright" / "tomorrow-night-eighties" - классические тёмные темы
+    // Важно: чтобы тема работала, её CSS должен быть подключён (theme/<name>.min.css)
     const editor = CodeMirror.fromTextArea(textarea, {
         mode: { name: "javascript", json: true },
         // theme: "material", // Измените на другую тему при необходимости

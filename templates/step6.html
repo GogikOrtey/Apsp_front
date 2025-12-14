@@ -60,11 +60,13 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night-bright.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/nord.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/cobalt.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/midnight.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/cobalt.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night-eighties.min.css">
 <style>
     .container {
         max-width: 900px !important;
@@ -205,12 +207,14 @@
     if (codeTextarea) {
         codeEditor = CodeMirror.fromTextArea(codeTextarea, {
             mode: { name: "javascript", typescript: true },
-            theme: "dracula",
+            // theme: "dracula",
+            theme: "material",
             lineNumbers: true,
             lineWrapping: true,
             matchBrackets: true,
             autoCloseBrackets: true,
-            styleActiveLine: true,
+            // Убираем подсветку "активной строки" (строка с курсором)
+            styleActiveLine: false,
             indentUnit: 4,
             tabSize: 4,
             indentWithTabs: false,
