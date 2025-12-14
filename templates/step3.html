@@ -21,7 +21,7 @@
         <textarea 
             class="field-textarea" 
             name="query"
-            rows="1"></textarea>
+            rows="1">{{ saved_data.get('query', '') }}</textarea>
     </div>
     
     <div class="field-input-group">
@@ -32,7 +32,7 @@
         <textarea 
             class="field-textarea" 
             name="url_search_query_page_2"
-            rows="1"></textarea>
+            rows="1">{{ saved_data.get('url_search_query_page_2', '') }}</textarea>
     </div>
     
     <div class="field-input-group">
@@ -43,7 +43,7 @@
         <textarea 
             class="field-textarea" 
             name="count_of_page_on_pagination"
-            rows="1"></textarea>
+            rows="1">{{ saved_data.get('count_of_page_on_pagination', '') }}</textarea>
     </div>
     
     <div class="field-input-group">
@@ -54,7 +54,7 @@
         <textarea 
             class="field-textarea" 
             name="total_count_of_results"
-            rows="1">0</textarea>
+            rows="1">{{ saved_data.get('total_count_of_results', '0') }}</textarea>
     </div>
     
     <div class="field-input-group field-input-group-compact">
@@ -65,35 +65,35 @@
         <textarea 
             class="field-textarea field-textarea-compact" 
             name="links_items_0"
-            rows="1"></textarea>
+            rows="1">{% if saved_data.get('links_items') and saved_data.get('links_items')|length > 0 %}{{ saved_data.get('links_items')[0] }}{% endif %}</textarea>
     </div>
     
     <div class="field-input-group field-input-group-compact">
         <textarea 
             class="field-textarea field-textarea-compact" 
             name="links_items_1"
-            rows="1"></textarea>
+            rows="1">{% if saved_data.get('links_items') and saved_data.get('links_items')|length > 1 %}{{ saved_data.get('links_items')[1] }}{% endif %}</textarea>
     </div>
     
     <div class="field-input-group field-input-group-compact">
         <textarea 
             class="field-textarea field-textarea-compact" 
             name="links_items_2"
-            rows="1"></textarea>
+            rows="1">{% if saved_data.get('links_items') and saved_data.get('links_items')|length > 2 %}{{ saved_data.get('links_items')[2] }}{% endif %}</textarea>
     </div>
     
     <div class="field-input-group field-input-group-compact">
         <textarea 
             class="field-textarea field-textarea-compact" 
             name="links_items_3"
-            rows="1"></textarea>
+            rows="1">{% if saved_data.get('links_items') and saved_data.get('links_items')|length > 3 %}{{ saved_data.get('links_items')[3] }}{% endif %}</textarea>
     </div>
     
     <div class="field-input-group field-input-group-compact">
         <textarea 
             class="field-textarea field-textarea-compact" 
             name="links_items_4"
-            rows="1"></textarea>
+            rows="1">{% if saved_data.get('links_items') and saved_data.get('links_items')|length > 4 %}{{ saved_data.get('links_items')[4] }}{% endif %}</textarea>
     </div>
     
     <div class="btn-group">

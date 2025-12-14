@@ -194,21 +194,61 @@ def step3():
         return redirect(url_for('step1'))
     
     if request.method == 'POST':
-        # Сохраняем данные parsePage в сессию
-        session['parsePageData'] = request.form.get('parsePageData', '')
+        # Собираем данные из формы
+        query = request.form.get('query', '')
+        url_search_query_page_2 = request.form.get('url_search_query_page_2', '')
+        count_of_page_on_pagination = request.form.get('count_of_page_on_pagination', '')
+        total_count_of_results = request.form.get('total_count_of_results', '')
+        
+        # Собираем все поля links_items (links_items_0, links_items_1, и т.д.)
+        links_items = []
+        for key in sorted(request.form.keys()):
+            if key.startswith('links_items_'):
+                value = request.form.get(key, '').strip()
+                # Добавляем только непустые значения
+                if value:
+                    links_items.append(value)
+        
+        # Формируем объект поискового запроса
+        search_request = {
+            "query": query,
+            "url_search_query_page_2": url_search_query_page_2,
+            "count_of_page_on_pagination": count_of_page_on_pagination,
+            "total_count_of_results": total_count_of_results,
+            "links_items": links_items
+        }
+        
+        # Формируем итоговый JSON
+        result_json = {
+            "search_requests": [search_request]
+        }
+        
+        # Выводим результат в консоль
+        print('\n=== Результаты заполнения полей (шаг 3) ===')
+        print(json.dumps(result_json, ensure_ascii=False, indent=2))
+        print('=' * 30 + '\n')
+        
+        # Сохраняем данные в сессию
+        session['search_requests_data'] = result_json
         
         # Переходим на следующий шаг
         return redirect(url_for('step4'))
     
     # Отображаем форму с сохраненными данными
+    # Восстанавливаем данные из сессии, если есть
+    search_requests_data = session.get('search_requests_data', {})
+    saved_data = {}
+    if search_requests_data and 'search_requests' in search_requests_data and len(search_requests_data['search_requests']) > 0:
+        saved_data = search_requests_data['search_requests'][0]
+    
     return render_template('step3.html',
-                         parsePageData=session.get('parsePageData', ''))
+                         saved_data=saved_data)
 
 @app.route('/step4', methods=['GET', 'POST'])
 def step4():
     """Шаг 4: Выбор опций"""
     # Проверяем, что пользователь прошел предыдущие шаги
-    if 'selected_fields' not in session or 'examples_data' not in session or 'parsePageData' not in session:
+    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session:
         return redirect(url_for('step1'))
     
     if request.method == 'POST':
@@ -230,7 +270,7 @@ def step4():
 def summary():
     """Финальная страница: Подтверждение и итог"""
     # Проверяем, что пользователь прошел все шаги
-    if 'selected_fields' not in session or 'examples_data' not in session or 'parsePageData' not in session or 'interests' not in session:
+    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session or 'interests' not in session:
         return redirect(url_for('step1'))
     
     # Загружаем описания полей для отображения
@@ -249,7 +289,7 @@ def summary():
             form_data = {
                 'selected_fields': selected_fields_data,
                 'examples_data': session.get('examples_data', {}),
-                'parsePageData': session.get('parsePageData', ''),
+                'search_requests_data': session.get('search_requests_data', {}),
                 'interests': session.get('interests', []),
                 'newsletter': session.get('newsletter', 'no'),
                 'comments': session.get('comments', '')
@@ -274,7 +314,7 @@ def summary():
     form_data = {
         'selected_fields': selected_fields_data,
         'examples_data': session.get('examples_data', {}),
-        'parsePageData': session.get('parsePageData', ''),
+        'search_requests_data': session.get('search_requests_data', {}),
         'interests': session.get('interests', []),
         'newsletter': session.get('newsletter', 'no'),
         'comments': session.get('comments', '')
