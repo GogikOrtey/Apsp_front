@@ -2,6 +2,45 @@
 
 {% block title %}Шаг 4 - Подтверждение{% endblock %}
 
+{% block extra_css %}
+<style>
+    .container {
+        max-width: 800px !important;
+    }
+    
+    #json-textarea {
+        margin-top: 10px;
+        padding: 15px;
+        background: #000;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 5px;
+        width: 100%;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        white-space: pre;
+        overflow: hidden;
+        resize: none;
+        line-height: 1.5;
+    }
+    
+    .error-message {
+        display: none;
+        margin-top: 10px;
+        padding: 15px;
+        background: #ffcccc;
+        border: 1px solid #ff9999;
+        border-radius: 5px;
+        color: #cc0000;
+        font-weight: 500;
+    }
+    
+    .error-message.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>Шаг 4: Подтверждение данных</h1>
 
@@ -13,12 +52,13 @@
     <div class="step">5</div>
 </div>
 
-<form method="POST">
+<form method="POST" id="json-form">
 <div style="margin-bottom: 30px;">
     <h2 style="color: #667eea; margin-bottom: 20px;">Результирующий JSON</h2>
     
     <div class="summary-item">
-        <textarea name="edited_json" style="margin-top: 10px; padding: 15px; background: #000; color: #fff; border: 1px solid #444; border-radius: 5px; width: 100%; min-height: 400px; font-family: 'Courier New', monospace; font-size: 14px; white-space: pre; overflow-x: auto; resize: vertical;">{{ result_json | tojson(indent=2) }}</textarea>
+        <textarea id="json-textarea" name="edited_json">{{ result_json | tojson(indent=2) }}</textarea>
+        <div id="error-message" class="error-message">JSON невалидный</div>
     </div>
 </div>
     <div class="btn-group">
@@ -26,5 +66,51 @@
         <button type="submit" class="btn btn-primary">Далее →</button>
     </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const textarea = document.getElementById('json-textarea');
+    const errorMessage = document.getElementById('error-message');
+    const form = document.getElementById('json-form');
+    
+    // Автоматическое изменение высоты textarea
+    function adjustTextareaHeight() {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+    
+    // Инициализация высоты при загрузке
+    adjustTextareaHeight();
+    
+    // Изменение высоты при изменении содержимого
+    textarea.addEventListener('input', function() {
+        adjustTextareaHeight();
+        // Скрываем ошибку при изменении текста
+        errorMessage.classList.remove('show');
+    });
+    
+    // Валидация JSON при отправке формы
+    form.addEventListener('submit', function(e) {
+        const jsonText = textarea.value.trim();
+        
+        // Скрываем предыдущую ошибку
+        errorMessage.classList.remove('show');
+        
+        try {
+            // Проверяем валидность JSON
+            const parsedJson = JSON.parse(jsonText);
+            
+            // Если JSON валиден, выводим в консоль
+            console.log(parsedJson);
+            
+            // Позволяем форме отправиться (не вызываем preventDefault)
+        } catch (error) {
+            // Если JSON невалиден, предотвращаем отправку и показываем ошибку
+            e.preventDefault();
+            errorMessage.classList.add('show');
+        }
+    });
+</script>
 {% endblock %}
 

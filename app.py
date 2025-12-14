@@ -260,6 +260,19 @@ def step4():
     fields = load_fields_descriptions()
     
     if request.method == 'POST':
+        # Получаем отредактированный JSON из формы
+        edited_json_str = request.form.get('edited_json', '')
+        
+        if edited_json_str.strip():
+            try:
+                # Парсим и сохраняем отредактированный JSON в сессию
+                edited_json = json.loads(edited_json_str)
+                session['result_json'] = edited_json
+            except json.JSONDecodeError:
+                # Если JSON невалидный (хотя валидация должна была пройти на клиенте),
+                # все равно пробуем перейти, но используем данные из сессии
+                pass
+        
         # Переходим на следующий шаг
         return redirect(url_for('step5'))
     
