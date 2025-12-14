@@ -74,6 +74,44 @@
         background: #e0e7ff;
         color: #3d48a6;
     }
+
+    .tooltip-wrapper {
+        position: relative;
+        display: block;
+        width: 100%;
+    }
+
+    .custom-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        background: #333333ec;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        z-index: 1000;
+    }
+
+    .custom-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #333333ec;
+    }
+
+    .custom-tooltip.show {
+        opacity: 1;
+    }
 </style>
 {% endblock %}
 
@@ -86,8 +124,45 @@
     </div>
     <div class="welcome-actions">
         <a href="{{ url_for('step1') }}" class="start-button">Начать заполнение полей</a>
-        <a href="{{ url_for('step4') }}" class="start-button secondary-button">&lt;/&gt; Перейти к заполнению JSON &lt;/&gt;</a>
+        <div class="tooltip-wrapper" id="dev-json-btn-wrapper">
+            <a href="{{ url_for('step4') }}" class="start-button secondary-button" id="dev-json-btn" aria-describedby="dev-json-tooltip">&lt;/&gt; Перейти к заполнению JSON &lt;/&gt;</a>
+            <div class="custom-tooltip" id="dev-json-tooltip" role="tooltip">Для разработчиков</div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const wrapper = document.getElementById('dev-json-btn-wrapper');
+        const tooltip = document.getElementById('dev-json-tooltip');
+        if (!wrapper || !tooltip) return;
+
+        let hoverTimeout = null;
+        const showDelayMs = 200;
+
+        function showWithDelay() {
+            hoverTimeout = setTimeout(function () {
+                tooltip.classList.add('show');
+            }, showDelayMs);
+        }
+
+        function hideNow() {
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            tooltip.classList.remove('show');
+        }
+
+        wrapper.addEventListener('mouseenter', showWithDelay);
+        wrapper.addEventListener('mouseleave', hideNow);
+
+        // Небольшой бонус для клавиатурной навигации
+        wrapper.addEventListener('focusin', showWithDelay);
+        wrapper.addEventListener('focusout', hideNow);
+    });
+</script>
 {% endblock %}
 
