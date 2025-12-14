@@ -3,25 +3,31 @@
 {% block title %}Шаг 4 - Подтверждение{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<!-- Популярные темные темы, похожие на VS Dark -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/tomorrow-night.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/nord.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/cobalt.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
 <style>
     .container {
         max-width: 800px !important;
     }
     
-    #json-textarea {
+    .CodeMirror {
         margin-top: 10px;
-        padding: 15px;
-        background: #000;
-        color: #fff;
         border: 1px solid #444;
         border-radius: 5px;
-        width: 100%;
-        font-family: 'Courier New', monospace;
+        height: auto;
         font-size: 14px;
-        white-space: pre;
-        overflow: hidden;
-        resize: none;
         line-height: 1.5;
+    }
+    
+    .CodeMirror-scroll {
+        min-height: 200px;
+        max-height: 600px;
     }
     
     .error-message {
@@ -57,7 +63,7 @@
     <h2 style="color: #667eea; margin-bottom: 20px;">Результирующий JSON</h2>
     
     <div class="summary-item">
-        <textarea id="json-textarea" name="edited_json">{{ result_json_str }}</textarea>
+        <textarea id="json-textarea" name="edited_json" style="display: none;">{{ result_json_str }}</textarea>
         <div id="error-message" class="error-message">JSON невалидный</div>
     </div>
 </div>
@@ -69,31 +75,65 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
 <script>
     const textarea = document.getElementById('json-textarea');
     const errorMessage = document.getElementById('error-message');
     const form = document.getElementById('json-form');
     
-    // Автоматическое изменение высоты textarea
-    function adjustTextareaHeight() {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
+    // Инициализация CodeMirror
+    // Доступные темы, похожие на VS Dark:
+    // "material" - наиболее похожа на VS Dark (рекомендуется)
+    // "tomorrow-night" - классическая темная тема
+    // "dracula" - популярная темная тема
+    // "nord" - холодная темная тема
+    // "cobalt" - темная с синими оттенками
+    // "monokai" - текущая тема
+    const editor = CodeMirror.fromTextArea(textarea, {
+        mode: { name: "javascript", json: true },
+        theme: "material", // Измените на другую тему при необходимости
+        lineNumbers: true,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        styleActiveLine: true,
+        indentUnit: 2,
+        tabSize: 2,
+        indentWithTabs: false,
+        viewportMargin: Infinity
+    });
+    
+    // Автоматическое изменение высоты редактора
+    function adjustEditorHeight() {
+        editor.setSize(null, 'auto');
+        const height = editor.getScrollInfo().height;
+        editor.getScrollerElement().style.height = Math.min(Math.max(height + 20, 200), 600) + 'px';
+        editor.refresh();
     }
     
     // Инициализация высоты при загрузке
-    adjustTextareaHeight();
+    setTimeout(adjustEditorHeight, 100);
     
     // Изменение высоты при изменении содержимого
-    textarea.addEventListener('input', function() {
-        adjustTextareaHeight();
+    editor.on('change', function() {
+        adjustEditorHeight();
         // Скрываем ошибку при изменении текста
         errorMessage.classList.remove('show');
+        // Синхронизируем с textarea для отправки формы
+        editor.save();
     });
     
     // Валидация JSON при отправке формы
     form.addEventListener('submit', function(e) {
-        // Получаем актуальное значение из textarea напрямую
-        const jsonText = document.getElementById('json-textarea').value;
+        // Получаем актуальное значение из редактора
+        const jsonText = editor.getValue();
+        
+        // Обновляем скрытый textarea для отправки формы
+        textarea.value = jsonText;
         
         // Скрываем предыдущую ошибку
         errorMessage.classList.remove('show');
