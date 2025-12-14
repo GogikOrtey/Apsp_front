@@ -204,11 +204,17 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: 6px;
+        /* Контейнер статусов должен быть "невидимым": без фона/границы и без внутренних отступов */
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    /* Если статусы есть — можно оставить небольшой отступ до лога */
+    .gen-statuses:not(:empty) {
         margin-bottom: 12px;
-        padding: 10px 12px;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        background: #fafafa;
     }
 
     .gen-statuses__item {
@@ -513,7 +519,7 @@
 
     function getGenStatusDurationSec(statusIndex) {
         // Первые 5 статусов (0..4) — 3..6 секунд, далее — 8..16 секунд
-        return statusIndex <= 4
+        return statusIndex <= 3
             ? randomIntInclusive(3, 6)
             : randomIntInclusive(8, 16);
     }
@@ -644,7 +650,7 @@
         const now = Date.now();
 
         // Анимация точек у активного статуса
-        if (now - genStatusesState.lastDotTickAtMs >= 500) {
+        if (now - genStatusesState.lastDotTickAtMs >= 300) {
             genStatusesState.lastDotTickAtMs = now;
             genStatusesState.dotPhase = (genStatusesState.dotPhase % 3) + 1;
             renderGenStatuses();
