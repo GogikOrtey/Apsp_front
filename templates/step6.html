@@ -23,7 +23,7 @@
             </div>
             <div class="accordion-content">
                 <div class="accordion-content-inner">
-                    <p class="accordion-text">Текст для Log блока</p>
+                    <div id="gen-statuses" class="gen-statuses" aria-live="polite"></div>
                     <textarea id="log-textarea" class="accordion-textarea" readonly>Логи будут отображаться здесь</textarea>
                 </div>
             </div>
@@ -197,6 +197,48 @@
         line-height: 1.5;
     }
 
+    /* ===========================
+       Генерационные статусы (над логом)
+       =========================== */
+    .gen-statuses {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        background: #fafafa;
+    }
+
+    .gen-statuses__item {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        align-items: center;
+        column-gap: 10px;
+        min-height: 20px;
+        color: #2b2b2b;
+        font-size: 14px;
+        line-height: 1.25;
+    }
+
+    .gen-statuses__check {
+        width: 16px;
+        height: 16px;
+        display: block;
+        opacity: 0;
+        transform: translateY(0.5px);
+    }
+
+    .gen-statuses__item--done .gen-statuses__check {
+        opacity: 1;
+    }
+
+    .gen-statuses__item--active {
+        font-weight: 600;
+        color: #111;
+    }
+
     .accordion-textarea {
         width: 100%;
         height: 300px;
@@ -356,6 +398,12 @@
             });
         }
 
+        // Стартуем список статусов только когда открыт Log и генерация ещё идёт
+        if (accordionItem.id === 'log-block') {
+            startGenStatusesIfNeeded();
+            updateGenStatusesVisibility();
+        }
+
         // Подставляем итоговый статус только после завершения генерации и при раскрытии Status
         if (accordionItem.id === 'status-block') {
             maybeLoadGlobalStatusMessage();
@@ -378,12 +426,14 @@
         document.querySelectorAll('.accordion-item').forEach(item => {
             item.classList.remove('active');
         });
+        updateGenStatusesVisibility();
         
         // Открываем текущий блок, если он был закрыт
         if (!isActive) {
             accordionItem.classList.add('active');
             onAccordionOpened(accordionItem);
         }
+        updateGenStatusesVisibility();
     }
 
     // Функция для обновления содержимого лог-файла
@@ -423,6 +473,198 @@
     let status_message_loaded = false;
     let statusTypewriterTimer = null;
     let statusTypewriterInProgress = false;
+
+    // ===========================
+    // Статусы генерации (над логом)
+    // ===========================
+    const GEN_STATUS_CHECK_ICON_URL = "{{ url_for('content', filename='check.png') }}";
+    const GEN_STATUSES = [
+        'Thinking',
+        'Planning',
+        'Exploring',
+        'Analyzing',
+        'Planning next moves',
+        'Processing',
+        'Solving',
+        'Generating',
+        'Cross‑checking',
+        'Optimizing',
+        'Summarizing',
+        'Finalizing'
+    ];
+
+    const genStatusesState = {
+        started: false,
+        finalized: false,
+        currentIndex: 0,
+        nextSwitchAtMs: 0,
+        dotPhase: 0,
+        lastDotTickAtMs: 0,
+        tickTimer: null
+    };
+
+    let genStatusesDom = null; // { container, items: [{itemEl, labelEl}] }
+
+    function randomIntInclusive(min, max) {
+        const a = Math.ceil(min);
+        const b = Math.floor(max);
+        return Math.floor(Math.random() * (b - a + 1)) + a;
+    }
+
+    function getGenStatusDurationSec(statusIndex) {
+        // Первые 5 статусов (0..4) — 3..6 секунд, далее — 8..16 секунд
+        return statusIndex <= 4
+            ? randomIntInclusive(3, 6)
+            : randomIntInclusive(8, 16);
+    }
+
+    function isLogAccordionOpen() {
+        const logBlock = document.getElementById('log-block');
+        return !!(logBlock && logBlock.classList.contains('active'));
+    }
+
+    function ensureGenStatusesDom() {
+        if (genStatusesDom && genStatusesDom.container) return genStatusesDom;
+        const container = document.getElementById('gen-statuses');
+        if (!container) return null;
+
+        container.innerHTML = '';
+        const items = GEN_STATUSES.map(function(label) {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'gen-statuses__item';
+
+            const checkEl = document.createElement('img');
+            checkEl.className = 'gen-statuses__check';
+            checkEl.src = GEN_STATUS_CHECK_ICON_URL;
+            checkEl.alt = '';
+
+            const labelEl = document.createElement('div');
+            labelEl.className = 'gen-statuses__label';
+            labelEl.textContent = label;
+
+            itemEl.appendChild(checkEl);
+            itemEl.appendChild(labelEl);
+            container.appendChild(itemEl);
+
+            return { itemEl, labelEl, baseLabel: label };
+        });
+
+        genStatusesDom = { container, items };
+        return genStatusesDom;
+    }
+
+    function updateGenStatusesVisibility() {
+        const dom = ensureGenStatusesDom();
+        if (!dom) return;
+
+        // Показываем список статусов, пока открыт Log:
+        // - во время генерации (code_gen_complete=false)
+        // - и после завершения, если статусы уже успели стартовать (чтобы увидеть финальную галочку)
+        const shouldShow = isLogAccordionOpen() && (!code_gen_complete || genStatusesState.started);
+        dom.container.style.display = shouldShow ? 'grid' : 'none';
+    }
+
+    function renderGenStatuses() {
+        const dom = ensureGenStatusesDom();
+        if (!dom) return;
+
+        const activeIdx = genStatusesState.currentIndex;
+        const showUntil = Math.max(0, activeIdx);
+        const lastIdx = GEN_STATUSES.length - 1;
+
+        dom.items.forEach(function(it, idx) {
+            const isVisible = idx <= showUntil;
+            it.itemEl.style.display = isVisible ? 'grid' : 'none';
+
+            if (!isVisible) return;
+
+            const isDone = idx < activeIdx || (genStatusesState.finalized && idx === activeIdx);
+            const isActive = (idx === activeIdx) && !genStatusesState.finalized;
+
+            it.itemEl.classList.toggle('gen-statuses__item--done', isDone);
+            it.itemEl.classList.toggle('gen-statuses__item--active', isActive);
+
+            if (isActive) {
+                const dots = '.'.repeat(genStatusesState.dotPhase || 0);
+                it.labelEl.textContent = it.baseLabel + dots;
+            } else {
+                it.labelEl.textContent = it.baseLabel;
+            }
+
+            // На Finalizing, если генерация не завершилась — остаёмся активными (с точками), не двигаемся дальше
+            if (idx === lastIdx && idx === activeIdx && !genStatusesState.finalized) {
+                // ничего дополнительно
+            }
+        });
+    }
+
+    function startGenStatusesIfNeeded() {
+        if (genStatusesState.started) return;
+        if (code_gen_complete) return;
+
+        genStatusesState.started = true;
+        genStatusesState.finalized = false;
+        genStatusesState.currentIndex = 0;
+        genStatusesState.dotPhase = 1;
+        genStatusesState.lastDotTickAtMs = Date.now();
+        genStatusesState.nextSwitchAtMs = Date.now() + (getGenStatusDurationSec(0) * 1000);
+
+        updateGenStatusesVisibility();
+        renderGenStatuses();
+
+        if (!genStatusesState.tickTimer) {
+            genStatusesState.tickTimer = setInterval(genStatusesTick, 250);
+        }
+    }
+
+    function finalizeGenStatuses() {
+        if (!genStatusesState.started) return;
+        if (genStatusesState.finalized) return;
+
+        genStatusesState.finalized = true;
+        genStatusesState.dotPhase = 0;
+        renderGenStatuses();
+
+        if (genStatusesState.tickTimer) {
+            clearInterval(genStatusesState.tickTimer);
+            genStatusesState.tickTimer = null;
+        }
+    }
+
+    function genStatusesTick() {
+        updateGenStatusesVisibility();
+        if (!genStatusesState.started) return;
+        if (genStatusesState.finalized) return;
+
+        if (code_gen_complete) {
+            finalizeGenStatuses();
+            return;
+        }
+
+        const now = Date.now();
+
+        // Анимация точек у активного статуса
+        if (now - genStatusesState.lastDotTickAtMs >= 500) {
+            genStatusesState.lastDotTickAtMs = now;
+            genStatusesState.dotPhase = (genStatusesState.dotPhase % 3) + 1;
+            renderGenStatuses();
+        }
+
+        // Переключение статусов по таймеру (доходим до Finalizing и остаёмся там)
+        if (now >= genStatusesState.nextSwitchAtMs) {
+            const lastIdx = GEN_STATUSES.length - 1;
+            if (genStatusesState.currentIndex < lastIdx) {
+                genStatusesState.currentIndex += 1;
+                genStatusesState.dotPhase = 1;
+                genStatusesState.lastDotTickAtMs = now;
+                genStatusesState.nextSwitchAtMs = now + (getGenStatusDurationSec(genStatusesState.currentIndex) * 1000);
+                renderGenStatuses();
+            } else {
+                // Уже на Finalizing — просто держим его активным
+                genStatusesState.nextSwitchAtMs = now + (getGenStatusDurationSec(genStatusesState.currentIndex) * 1000);
+            }
+        }
+    }
 
     function stopStatusTypewriter() {
         if (statusTypewriterTimer) {
@@ -706,6 +948,9 @@
     function handleCodeGenComplete() {
         if (!code_gen_complete) return;
 
+        // Помечаем последний активный статус как завершённый
+        finalizeGenStatuses();
+
         // Скрываем блок Log
         const logBlock = document.getElementById('log-block');
         if (logBlock) {
@@ -730,12 +975,16 @@
         // Обновляем содержимое каждые 500 мс (2 раза в секунду)
         setInterval(updateLogContent, 500);
 
+        // Log открыт по умолчанию — стартуем статусы сразу (если генерация ещё идёт)
+        startGenStatusesIfNeeded();
+        updateGenStatusesVisibility();
+
         /////////////////////////////////////////////////////////// Потом поменять
         // Устанавливаем code_gen_complete в true через 15 секунд
         setTimeout(function() {
             code_gen_complete = true;
             handleCodeGenComplete();
-        }, 5000);
+        }, 50000);
     });
 </script>
 {% endblock %}
