@@ -54,17 +54,45 @@
         <textarea 
             class="field-textarea" 
             name="total_count_of_results"
-            rows="1"></textarea>
+            rows="1">0</textarea>
     </div>
     
-    <div class="field-input-group">
+    <div class="field-input-group field-input-group-compact">
         <label class="field-label">
             <span class="field-description">Ссылки на товары на странице поиска</span>
             <span class="field-name">links_items</span>
         </label>
         <textarea 
-            class="field-textarea" 
-            name="links_items"
+            class="field-textarea field-textarea-compact" 
+            name="links_items_0"
+            rows="1"></textarea>
+    </div>
+    
+    <div class="field-input-group field-input-group-compact">
+        <textarea 
+            class="field-textarea field-textarea-compact" 
+            name="links_items_1"
+            rows="1"></textarea>
+    </div>
+    
+    <div class="field-input-group field-input-group-compact">
+        <textarea 
+            class="field-textarea field-textarea-compact" 
+            name="links_items_2"
+            rows="1"></textarea>
+    </div>
+    
+    <div class="field-input-group field-input-group-compact">
+        <textarea 
+            class="field-textarea field-textarea-compact" 
+            name="links_items_3"
+            rows="1"></textarea>
+    </div>
+    
+    <div class="field-input-group field-input-group-compact">
+        <textarea 
+            class="field-textarea field-textarea-compact" 
+            name="links_items_4"
             rows="1"></textarea>
     </div>
     
@@ -137,6 +165,17 @@
     
     .btn-group {
         margin-top: 20px;
+    }
+    
+    /* Компактные поля для links_items */
+    .field-input-group-compact {
+        margin-bottom: 5px;
+    }
+    
+    .field-textarea-compact {
+        padding: 5px 8px;
+        min-height: 1.2em;
+        font-size: 14px;
     }
 </style>
 {% endblock %}
