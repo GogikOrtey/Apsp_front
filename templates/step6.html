@@ -243,7 +243,7 @@
     // ===========================
     // Настройки
     // ===========================
-    // Скорость "печати" кода (символов в секунду). Это единственная настройка, которую нужно менять.
+    // Скорость "печати" кода (символов в секунду). Это единственная настройка, которую нужно менять
     // const CODE_TYPEWRITER_CHARS_PER_SEC = 320;
     // const CODE_TYPEWRITER_CHARS_PER_SEC = 450;
     const CODE_TYPEWRITER_CHARS_PER_SEC = 370;
@@ -253,6 +253,9 @@
     // - 'paged'  : новый режим — скроллим вниз "порциями" по N строк только когда блок снова дошёл до низа экрана
     const CODE_AUTO_SCROLL_MODE = 'follow'; // 'follow' | 'paged'
     const CODE_PAGED_SCROLL_LINES = 10;
+    // Запас по высоте редактора (в строках), чтобы при добавлении новой строки
+    // не было микродёрганий из-за пересчётов высоты/внутренней прокрутки.
+    const CODE_EDITOR_EXTRA_LINES = 1;
 
     // Инициализация CodeMirror для отображения кода
     const codeTextarea = document.getElementById('code-gen-textarea');
@@ -291,8 +294,17 @@
         // Важно: задаём высоту через setSize(px), не трогаем напрямую scrollerElement.style.height,
         // иначе получаются конфликтующие пересчёты и "дёрганье" на строку.
         codeEditor.refresh();
-        const height = codeEditor.getScrollInfo().height;
-        codeEditor.setSize(null, height + 20);
+        const wrapper = codeEditor.getWrapperElement();
+        // Берём высоту именно КОНТЕНТА, а не scrollHeight скроллера.
+        // scrollHeight часто становится max(contentHeight, clientHeight) и может "саморазгоняться"
+        // при наших setSize(), из-за чего пустое место снизу растёт.
+        const sizer = wrapper ? wrapper.querySelector('.CodeMirror-sizer') : null;
+        const contentHeight = (sizer && sizer.offsetHeight) ? sizer.offsetHeight : codeEditor.getScrollInfo().height;
+        const linePx = (typeof codeEditor.defaultTextHeight === 'function')
+            ? codeEditor.defaultTextHeight()
+            : 18;
+        const extraPx = (Math.max(0, CODE_EDITOR_EXTRA_LINES) * linePx) + 20;
+        codeEditor.setSize(null, contentHeight + extraPx);
     }
 
     function scheduleAdjustCodeEditorHeight() {
@@ -487,10 +499,6 @@
             const lastLine = doc.lastLine();
             const lastCh = doc.getLine(lastLine).length;
             doc.replaceRange(chunk, { line: lastLine, ch: lastCh });
-
-            // Держим "вид" на конце текста (как будто генерация идёт снизу)
-            const scrollInfo = codeEditor.getScrollInfo();
-            codeEditor.scrollTo(null, scrollInfo.height);
 
             // Не пересчитываем высоту на каждом тике — это дорого.
             const now = Date.now();
