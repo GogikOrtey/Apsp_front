@@ -62,10 +62,8 @@
 <div style="margin-bottom: 30px;">
     <h2 style="color: #667eea; margin-bottom: 20px;">Результирующий JSON</h2>
     
-    <div class="summary-item">
-        <textarea id="json-textarea" name="edited_json" style="display: none;">{{ result_json_str }}</textarea>
-        <div id="error-message" class="error-message">JSON невалидный</div>
-    </div>
+    <textarea id="json-textarea" name="edited_json" style="display: none;">{{ result_json_str }}</textarea>
+    <div id="error-message" class="error-message">JSON невалидный</div>
 </div>
     <div class="btn-group">
         <a href="{{ url_for('step3') }}" class="btn btn-secondary">← Назад</a>
