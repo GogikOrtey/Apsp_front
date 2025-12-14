@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'  # Важно для работы сессий
 
 # Создаем папку data, если её нет
-os.makedirs('data', exist_ok=True)
+os.makedirs('data', exist_ok=True) 
 
 # Путь к JSON файлу
 JSON_FILE = 'data/submissions.json'
