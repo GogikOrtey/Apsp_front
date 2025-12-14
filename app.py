@@ -231,7 +231,7 @@ def step3():
         # Сохраняем данные в сессию
         session['search_requests_data'] = result_json
         
-        # Переходим на следующий шаг
+        # Переходим на следующий шаг (step4 - бывший summary)
         return redirect(url_for('step4'))
     
     # Отображаем форму с сохраненными данными
@@ -246,31 +246,9 @@ def step3():
 
 @app.route('/step4', methods=['GET', 'POST'])
 def step4():
-    """Шаг 4: Выбор опций"""
-    # Проверяем, что пользователь прошел предыдущие шаги
-    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session:
-        return redirect(url_for('step1'))
-    
-    if request.method == 'POST':
-        # Сохраняем данные в сессию
-        session['interests'] = request.form.getlist('interests')  # Множественный выбор
-        session['newsletter'] = request.form.get('newsletter', 'no')
-        session['comments'] = request.form.get('comments', '')
-        
-        # Переходим на финальный шаг
-        return redirect(url_for('summary'))
-    
-    # Отображаем форму с сохраненными данными
-    return render_template('step4.html',
-                         interests=session.get('interests', []),
-                         newsletter=session.get('newsletter', 'no'),
-                         comments=session.get('comments', ''))
-
-@app.route('/summary', methods=['GET', 'POST'])
-def summary():
-    """Финальная страница: Подтверждение и итог"""
+    """Шаг 4: Подтверждение и итог"""
     # Проверяем, что пользователь прошел все шаги
-    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session or 'interests' not in session:
+    if 'selected_fields' not in session or 'examples_data' not in session or 'search_requests_data' not in session:
         return redirect(url_for('step1'))
     
     # Загружаем описания полей для отображения
@@ -289,10 +267,7 @@ def summary():
             form_data = {
                 'selected_fields': selected_fields_data,
                 'examples_data': session.get('examples_data', {}),
-                'search_requests_data': session.get('search_requests_data', {}),
-                'interests': session.get('interests', []),
-                'newsletter': session.get('newsletter', 'no'),
-                'comments': session.get('comments', '')
+                'search_requests_data': session.get('search_requests_data', {})
             }
             
             # Сохраняем данные в JSON
@@ -302,7 +277,7 @@ def summary():
             return redirect(url_for('success'))
         else:
             # Возвращаемся на предыдущий шаг
-            return redirect(url_for('step4'))
+            return redirect(url_for('step3'))
     
     # Собираем все данные для отображения
     selected_fields = session.get('selected_fields', [])
@@ -314,13 +289,11 @@ def summary():
     form_data = {
         'selected_fields': selected_fields_data,
         'examples_data': session.get('examples_data', {}),
-        'search_requests_data': session.get('search_requests_data', {}),
-        'interests': session.get('interests', []),
-        'newsletter': session.get('newsletter', 'no'),
-        'comments': session.get('comments', '')
+        'search_requests_data': session.get('search_requests_data', {})
     }
     
-    return render_template('summary.html', data=form_data)
+    return render_template('step4.html', data=form_data)
+
 
 @app.route('/success')
 def success():
