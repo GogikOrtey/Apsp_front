@@ -1,29 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 import json
 import os
-import sys
-import logging
 from datetime import datetime
 from collections import OrderedDict
 from result_processer import process_results
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'  # Важно для работы сессий
-
-# Обеспечиваем вывод логов сразу, без буферизации (актуально в debug-консолях)
-try:
-    sys.stdout.reconfigure(line_buffering=True)
-    sys.stderr.reconfigure(line_buffering=True)
-except Exception:
-    pass
-
-# Единая функция логирования с принудительным flush
-def log(*args, **kwargs):
-    print(*args, **kwargs, flush=True)
-
-# Настраиваем базовый логгер и werkzeug для вывода запросов
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('werkzeug').setLevel(logging.INFO)
 
 # Создаем папку data, если её нет
 os.makedirs('data', exist_ok=True)
@@ -203,12 +186,12 @@ def step2():
     
     # Выводим выбранные поля в консоль сервера при переходе на шаг 2
     if request.method == 'GET':
-        log('\n=== Выбранные поля (переход на шаг 2) ===')
-        log(f'Количество выбранных полей: {len(selected_fields)}')
-        log('Выбранные поля:')
+        print('\n=== Выбранные поля (переход на шаг 2) ===')
+        print(f'Количество выбранных полей: {len(selected_fields)}')
+        print('Выбранные поля:')
         for field in selected_fields:
-            log(f'  - {field}')
-        log('=' * 30 + '\n')
+            print(f'  - {field}')
+        print('=' * 30 + '\n')
     
     if request.method == 'POST':
         # Собираем данные примеров из формы
@@ -246,9 +229,9 @@ def step2():
         ])
         
         # Выводим результат в консоль
-        log('\n=== Результаты заполнения полей (шаг 2) ===')
-        log(json.dumps(result_json, ensure_ascii=False, indent=2, sort_keys=False))
-        log('=' * 30 + '\n')
+        print('\n=== Результаты заполнения полей (шаг 2) ===')
+        print(json.dumps(result_json, ensure_ascii=False, indent=2, sort_keys=False))
+        print('=' * 30 + '\n')
         
         # Сохраняем данные примеров в сессию
         session['examples_data'] = result_json
@@ -303,9 +286,9 @@ def step3():
         ])
         
         # Выводим результат в консоль
-        log('\n=== Результаты заполнения полей (шаг 3) ===')
-        log(json.dumps(result_json, ensure_ascii=False, indent=2, sort_keys=False))
-        log('=' * 30 + '\n')
+        print('\n=== Результаты заполнения полей (шаг 3) ===')
+        print(json.dumps(result_json, ensure_ascii=False, indent=2, sort_keys=False))
+        print('=' * 30 + '\n')
         
         # Сохраняем данные в сессию
         session['search_requests_data'] = result_json
@@ -353,14 +336,14 @@ def step4():
                 session['result_json'] = edited_json
                 
                 # Выводим отредактированный JSON в консоль сервера
-                log('\n=== Отредактированный JSON (шаг 4) ===')
-                log(json.dumps(edited_json, ensure_ascii=False, indent=2, sort_keys=False))
-                log('=' * 30 + '\n')
+                print('\n=== Отредактированный JSON (шаг 4) ===')
+                print(json.dumps(edited_json, ensure_ascii=False, indent=2, sort_keys=False))
+                print('=' * 30 + '\n')
             except json.JSONDecodeError:
                 # Если JSON невалидный (хотя валидация должна была пройти на клиенте),
                 # все равно пробуем перейти, но используем данные из сессии
-                log('\n=== ОШИБКА: JSON невалидный ===')
-                log('Используются данные из сессии\n')
+                print('\n=== ОШИБКА: JSON невалидный ===')
+                print('Используются данные из сессии\n')
         
         # Переходим на следующий шаг
         return redirect(url_for('step5'))
@@ -401,7 +384,7 @@ def step5():
     
     if request.method == 'POST':
         # Выводим сообщение в консоль сервера
-        log("Начинаем генерацию")
+        print("Начинаем генерацию")
         
         # Переходим на следующий шаг
         return redirect(url_for('step6'))
@@ -495,5 +478,5 @@ def content(filename):
     return send_from_directory('content', filename)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=False)
+    app.run(debug=True, host='127.0.0.1', port=5000)
 
